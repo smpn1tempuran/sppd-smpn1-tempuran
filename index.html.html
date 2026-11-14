@@ -1,0 +1,3200 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aplikasi SPPD & SPT - SMP Negeri 1 Tempuran</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Pengaturan UI Aplikasi Web */
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f1f5f9;
+      color: #0f172a;
+    }
+
+    /* Pengaturan Dokumen Resmi Cetak (Sesuai Contoh Asli) */
+    .doc-sheet {
+      font-family: Arial, Helvetica, sans-serif;
+      color: #000000;
+      background: #ffffff;
+      width: 210mm;
+      min-height: 297mm;
+      padding: 10mm 14mm 12mm 14mm;
+      margin: 0 auto 24px auto;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      box-sizing: border-box;
+      position: relative;
+      font-size: 10pt;
+      line-height: 1.25;
+    }
+
+    .doc-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1.5px solid #000000;
+    }
+
+    .doc-table td, .doc-table th {
+      border: 1px solid #000000;
+      padding: 4px 6px;
+      vertical-align: top;
+      font-size: 9.8pt;
+    }
+
+    .doc-table-visum {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1.5px solid #000000;
+    }
+
+    .doc-table-visum td {
+      border: 1px solid #000000;
+      padding: 4px 6px;
+      vertical-align: top;
+      font-size: 9.6pt;
+    }
+
+    .kop-divider {
+      border-top: 2px solid #000000;
+      border-bottom: 0.75px solid #000000;
+      height: 2px;
+      margin-top: 4px;
+      margin-bottom: 10px;
+    }
+
+    /* Aturan Khusus Cetak / Print */
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 8mm 10mm 8mm 10mm;
+      }
+      body {
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      #preview-wrapper {
+        padding: 0 !important;
+        margin: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        overflow: visible !important;
+      }
+      .doc-sheet {
+        width: 100% !important;
+        min-height: auto !important;
+        margin: 0 !important;
+        padding: 2mm 4mm !important;
+        box-shadow: none !important;
+        page-break-after: always;
+        break-after: page;
+      }
+      .doc-sheet:last-child {
+        page-break-after: auto;
+        break-after: auto;
+      }
+    }
+
+    @media (max-width: 850px) {
+      .preview-scroll-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 12px;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- ===================================================================== -->
+  <!-- NAVBAR / HEADER APLIKASI (TIDAK IKUT TERCETAK)                        -->
+  <!-- ===================================================================== -->
+  <header class="no-print bg-slate-900 text-white shadow-lg sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="bg-sky-500/20 border border-sky-400/40 p-2 rounded-xl flex items-center justify-center">
+          <svg class="w-7 h-7 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+        </div>
+        <div>
+          <h1 class="font-bold text-base sm:text-lg leading-tight tracking-tight">E-SPPD & SPT DIGITAL</h1>
+          <p class="text-xs text-slate-300"><span id="header-school-name">SMP Negeri 1 Tempuran</span> • Oleh <span class="text-sky-400 font-semibold">Mas Operator Tem1</span></p>
+        </div>
+      </div>
+
+      <!-- Pengalih Mode Peran (Guru/Pengusul vs Admin TU) -->
+      <div class="flex items-center gap-2 bg-slate-800 p-1.5 rounded-xl border border-slate-700">
+        <span class="text-xs text-slate-400 px-2 hidden sm:inline">Mode Akses:</span>
+        <button id="btn-role-guru" onclick="switchRole('guru')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 bg-sky-600 text-white shadow">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+          Guru / Pengusul
+        </button>
+        <button id="btn-role-admin" onclick="requestAdminAccess()" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 text-slate-300 hover:text-white">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+          <span id="lbl-btn-admin">Login Admin TU</span>
+          <span id="badge-pending-count" class="ml-1 bg-amber-500 text-slate-950 text-[10px] font-bold px-1.5 py-0.2 rounded-full hidden">0</span>
+        </button>
+        <button id="btn-logout-admin" onclick="logoutAdmin()" class="hidden px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-600/90 hover:bg-rose-600 text-white transition" title="Keluar dari Akun Admin">
+          Keluar
+        </button>
+      </div>
+    </div>
+
+    <!-- Navigasi Tab -->
+    <nav class="bg-slate-800/90 border-t border-slate-700/80">
+      <div class="max-w-7xl mx-auto px-4 flex overflow-x-auto gap-1 py-1.5 text-xs sm:text-sm">
+        <button onclick="switchTab('daftar')" id="tab-daftar" class="nav-tab px-3.5 py-2 rounded-lg font-medium whitespace-nowrap bg-slate-700 text-white">
+          Daftar SPPD & Status
+        </button>
+        <button onclick="switchTab('buat')" id="tab-buat" class="nav-tab px-3.5 py-2 rounded-lg font-medium whitespace-nowrap text-slate-300 hover:bg-slate-700/60 hover:text-white">
+          + Buat Pengajuan SPPD Baru
+        </button>
+        <button onclick="switchTab('pratinjau')" id="tab-pratinjau" class="nav-tab px-3.5 py-2 rounded-lg font-medium whitespace-nowrap text-slate-300 hover:bg-slate-700/60 hover:text-white">
+          Pratinjau & Cetak (SPPD + SPT)
+        </button>
+        <button onclick="switchTab('rekap')" id="tab-rekap" class="nav-tab px-3.5 py-2 rounded-lg font-medium whitespace-nowrap text-slate-300 hover:bg-slate-700/60 hover:text-white">
+          Riwayat & Rekap Perjalanan
+        </button>
+        <button onclick="openBackupModal()" id="tab-backup" class="nav-tab hidden px-3.5 py-2 rounded-lg font-medium whitespace-nowrap text-slate-300 hover:bg-slate-700/60 hover:text-white">
+          Backup & Restore Data
+        </button>
+        <button onclick="switchTab('master')" id="tab-master" class="nav-tab hidden px-3.5 py-2 rounded-lg font-medium whitespace-nowrap text-slate-300 hover:bg-slate-700/60 hover:text-white">
+          Master Data, Akun & Logo
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- NOTIFIKASI TOAST & MODAL KONFIRMASI KUSTOM                            -->
+  <!-- ===================================================================== -->
+  <div id="toast-container" class="no-print fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm"></div>
+
+  <!-- Modal Backup & Restore Data -->
+  <div id="modal-backup" class="no-print fixed inset-0 bg-slate-900/70 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-200">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+        <div class="flex items-center gap-2">
+          <div class="bg-sky-100 text-sky-700 p-1.5 rounded-lg">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+          </div>
+          <h3 class="font-bold text-slate-800 text-base">Backup & Restore Data SPPD</h3>
+        </div>
+        <button onclick="closeBackupModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">✕</button>
+      </div>
+      <div class="space-y-4 text-xs">
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2">
+          <p class="font-bold text-slate-800">1. Cadangkan Data (Backup JSON)</p>
+          <p class="text-slate-600 leading-relaxed">Unduh seluruh riwayat SPPD, SPT, database Guru/Siswa, pengaturan pejabat, dan logo ke dalam satu file cadangan di komputer Anda.</p>
+          <button type="button" onclick="exportBackupJson()" class="w-full py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl shadow-xs transition">
+            ⬇ Unduh File Backup (.JSON)
+          </button>
+        </div>
+
+        <div class="bg-amber-50/70 border border-amber-200 rounded-xl p-3.5 space-y-2">
+          <p class="font-bold text-amber-950">2. Pulihkan Data (Restore JSON)</p>
+          <p class="text-amber-900 leading-relaxed">Pilih file backup <code class="font-mono font-bold">.json</code> yang pernah Anda unduh sebelumnya untuk memulihkan seluruh data aplikasi.</p>
+          <label class="block w-full text-center py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl shadow-xs cursor-pointer transition">
+            ⬆ Pilih File Backup untuk Restore
+            <input type="file" accept=".json" onchange="importBackupJson(event); closeBackupModal();" class="hidden" />
+          </label>
+        </div>
+
+        <div class="pt-1 flex justify-end">
+          <button type="button" onclick="closeBackupModal()" class="px-4 py-2 rounded-xl font-semibold text-slate-600 hover:bg-slate-100">Tutup</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Persetujuan & Penomoran Admin TU -->
+  <div id="modal-approve" class="no-print fixed inset-0 bg-slate-900/70 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-200">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+        <div class="flex items-center gap-2">
+          <div class="bg-emerald-100 text-emerald-700 p-1.5 rounded-lg">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          </div>
+          <h3 class="font-bold text-slate-800 text-base">Persetujuan & Penomoran SPPD</h3>
+        </div>
+        <button onclick="closeApproveModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">✕</button>
+      </div>
+      <div class="space-y-3 text-xs">
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
+          <p class="font-bold text-slate-800" id="approve-nama">-</p>
+          <p class="text-slate-600 mt-0.5" id="approve-maksud">-</p>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Lembar Ke (Opsional)</label>
+            <input type="text" id="approve-lembar" placeholder="Kosongkan jika tidak perlu" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 outline-none" />
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Kode No (Opsional)</label>
+            <input type="text" id="approve-kode" placeholder="Kosongkan jika tidak perlu" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 outline-none" />
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="font-semibold text-slate-700">Nomor Surat SPPD & SPT *</label>
+            <button type="button" onclick="generateNextNomorInput()" class="text-[11px] font-semibold text-sky-600 hover:underline">↻ Nomor Otomatis Berikutnya</button>
+          </div>
+          <input type="text" id="approve-nomor" placeholder="Contoh: 95/192/04.55.SMP/ 2026" class="w-full px-3 py-2 border border-emerald-400 bg-emerald-50/40 rounded-xl text-sm font-mono font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none" />
+        </div>
+        <div class="pt-3 flex justify-end gap-2 border-t border-slate-100">
+          <button type="button" onclick="closeApproveModal()" class="px-4 py-2 rounded-xl font-semibold text-slate-600 hover:bg-slate-100">Batal</button>
+          <button type="button" onclick="confirmApproveSppd()" class="px-5 py-2 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow">
+            ✓ Setujui & Terbitkan Nomor
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Login Akun Khusus Admin TU -->
+  <div id="modal-admin-login" class="no-print fixed inset-0 bg-slate-900/70 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 border border-slate-200">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+        <div class="flex items-center gap-2">
+          <div class="bg-amber-100 text-amber-700 p-1.5 rounded-lg">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+          </div>
+          <h3 class="font-bold text-slate-800 text-base">Login Akun Admin TU</h3>
+        </div>
+        <button onclick="closeAdminLoginModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">✕</button>
+      </div>
+      <form onsubmit="handleAdminLogin(event)" class="space-y-3 text-sm">
+        <p class="text-xs text-slate-500">Masukkan kredensial akun khusus Admin TU untuk menyetujui pengajuan, memberi nomor surat, mengedit data, dan mengelola master sekolah.</p>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Username Admin</label>
+          <input type="text" id="login-admin-user" required autocomplete="off" placeholder="Masukkan username admin" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Password Admin</label>
+          <input type="password" id="login-admin-pass" required placeholder="••••••••" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 outline-none" />
+        </div>
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="closeAdminLoginModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">Batal</button>
+          <button type="submit" class="px-5 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-slate-950 shadow">
+            Masuk sebagai Admin
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Konfirmasi Hapus -->
+  <div id="modal-delete" class="no-print fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 border border-slate-200">
+      <h3 class="font-bold text-slate-800 text-base mb-2">Hapus Dokumen SPPD?</h3>
+      <p class="text-xs text-slate-600 mb-5">Data SPPD dan Surat Perintah Tugas yang dipilih akan dihapus permanen dari daftar.</p>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeDeleteModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">Batal</button>
+        <button onclick="confirmDeleteSppd()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white">Ya, Hapus</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- KONTEN UTAMA APLIKASI                                                  -->
+  <!-- ===================================================================== -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6">
+
+    <!-- Banner Informasi Alur Kerja -->
+    <div id="role-banner" class="no-print mb-5 bg-sky-50 border border-sky-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div class="flex items-start gap-3">
+        <div class="bg-sky-600 text-white p-2 rounded-xl mt-0.5 shrink-0">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+        <div>
+          <h2 id="role-banner-title" class="text-sm font-bold text-sky-950">Mode Guru / Pengusul SPPD</h2>
+          <p id="role-banner-desc" class="text-xs text-sky-800 mt-0.5">
+            Guru hanya dapat membuat pengajuan SPPD baru dan mencetak dokumen <strong>setelah disetujui & diberi nomor oleh Admin TU</strong>. Pengeditan dan persetujuan dikunci khusus untuk Akun Admin.
+          </p>
+        </div>
+      </div>
+      <button onclick="switchTab('buat')" class="shrink-0 px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl shadow-xs transition">
+        + Buat Pengajuan Baru
+      </button>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- TAB 1: DAFTAR SPPD & PERSETUJUAN ADMIN                              -->
+    <!-- =================================================================== -->
+    <section id="section-daftar" class="no-print space-y-4">
+      <div class="bg-white rounded-2xl shadow-xs border border-slate-200 p-4 sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <h3 class="text-base font-bold text-slate-800">Daftar Pengajuan SPPD & Surat Perintah Tugas</h3>
+            <p class="text-xs text-slate-500">Dokumen berstatus "Disetujui" siap dicetak beserta nomor surat resminya.</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <select id="filter-kategori" onchange="renderSppdList()" class="px-3 py-2 border border-slate-300 rounded-xl text-xs bg-white focus:ring-2 focus:ring-sky-500 outline-none">
+              <option value="all">Semua Kategori (Guru & Siswa)</option>
+              <option value="pegawai">Guru / Staf</option>
+              <option value="siswa">Siswa</option>
+            </select>
+            <select id="filter-status" onchange="renderSppdList()" class="px-3 py-2 border border-slate-300 rounded-xl text-xs bg-white focus:ring-2 focus:ring-sky-500 outline-none">
+              <option value="all">Semua Status</option>
+              <option value="pending">Menunggu Nomor Admin</option>
+              <option value="approved">Disetujui (Bernomor)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-500 bg-slate-50">
+                <th class="py-3 px-3 rounded-tl-xl">Nomor Surat</th>
+                <th class="py-3 px-3">Kategori</th>
+                <th class="py-3 px-3">Nama Pelaksana</th>
+                <th class="py-3 px-3">Maksud & Tujuan</th>
+                <th class="py-3 px-3">Tanggal</th>
+                <th class="py-3 px-3">Status</th>
+                <th class="py-3 px-3 text-right rounded-tr-xl">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="sppd-table-body" class="divide-y divide-slate-100 text-xs sm:text-sm">
+              <!-- Diisi via JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 2: FORM PENGAJUAN / EDIT SPPD                                   -->
+    <!-- =================================================================== -->
+    <section id="section-buat" class="no-print hidden">
+      <form id="sppd-form" onsubmit="handleFormSubmit(event)" class="bg-white rounded-2xl shadow-xs border border-slate-200 p-4 sm:p-6 space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-4 gap-2">
+          <div>
+            <h2 id="form-title" class="text-lg font-bold text-slate-800">Formulir Pengajuan SPPD & SPT Baru</h2>
+            <p class="text-xs text-slate-500">Lengkapi data di bawah ini. Hasil cetak otomatis mencakup 3 halaman: SPPD Depan, SPPD Belakang (Visum), dan Surat Perintah Tugas.</p>
+          </div>
+          <button type="button" onclick="resetFormToNew()" class="self-start sm:self-auto px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl">
+            Reset Form
+          </button>
+        </div>
+
+        <input type="hidden" id="edit-sppd-id" value="" />
+
+        <!-- Pilihan Kategori Peserta: Guru/Staf vs Siswa -->
+        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">1. Jenis Pelaksana Perjalanan Dinas</label>
+              <p class="text-[11px] text-slate-500">Pilih apakah perjalanan dinas ini untuk Guru/Staf atau Siswa (Lomba/Kegiatan).</p>
+            </div>
+            <div class="inline-flex bg-white p-1 rounded-xl border border-slate-300 shadow-2xs">
+              <button type="button" id="btn-kat-pegawai" onclick="setKategoriPeserta('pegawai')" class="px-4 py-2 rounded-lg text-xs font-bold transition bg-sky-600 text-white">
+                Guru / Staf
+              </button>
+              <button type="button" id="btn-kat-siswa" onclick="setKategoriPeserta('siswa')" class="px-4 py-2 rounded-lg text-xs font-bold transition text-slate-600 hover:text-slate-900">
+                Siswa
+              </button>
+            </div>
+          </div>
+
+          <!-- Pilih Cepat dari Master Data -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-200/70">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Pilih Cepat dari Database Sekolah (Opsional)</label>
+              <select id="select-master-person" onchange="fillFromMasterPerson()" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-xs bg-white focus:ring-2 focus:ring-sky-500 outline-none">
+                <option value="">-- Pilih Nama Guru / Staf / Siswa --</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Pengusul (Guru / Pembuat Ajuan)</label>
+              <input type="text" id="inp-pengusul" required placeholder="Contoh: Mukaryono / Ahmad Fauzi, S.Pd." class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-sky-500 outline-none" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Identitas Pelaksana -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label id="lbl-nama" class="block text-xs font-semibold text-slate-700 mb-1">Nama Pegawai *</label>
+            <input type="text" id="inp-nama" required placeholder="Contoh: MUKARYONO" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-sky-500 outline-none" />
+          </div>
+          <div>
+            <label id="lbl-nip" class="block text-xs font-semibold text-slate-700 mb-1">NIP / NISN / NIS</label>
+            <input type="text" id="inp-nip" placeholder="Contoh: 197608312014061002 (atau '-' jika non-ASN)" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-sky-500 outline-none" />
+          </div>
+          <div>
+            <label id="lbl-pangkat" class="block text-xs font-semibold text-slate-700 mb-1">Pangkat / Golongan (atau Kelas untuk Siswa)</label>
+            <input type="text" id="inp-pangkat" placeholder="Contoh: Pengatur Muda Tk.1, II/ b atau Kelas VIII A" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-sky-500 outline-none" />
+          </div>
+          <div>
+            <label id="lbl-jabatan" class="block text-xs font-semibold text-slate-700 mb-1">Jabatan / Instansi (atau Status Siswa)</label>
+            <input type="text" id="inp-jabatan" required placeholder="Contoh: Operator Layanan Operasional/ SMP Negeri 1 Tempuran" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-sky-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Tingkat Biaya Perjalanan Dinas</label>
+            <select id="inp-tingkat" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm bg-white focus:ring-2 focus:ring-sky-500 outline-none">
+              <option value="Tingkat D">Tingkat D</option>
+              <option value="Tingkat C">Tingkat C</option>
+              <option value="Tingkat B">Tingkat B</option>
+              <option value="Tingkat A">Tingkat A</option>
+              <option value="-">- (Tidak ada / Siswa)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Kendaraan yang Dipergunakan</label>
+            <input type="text" id="inp-kendaraan" value="Kendaraan Umum" required placeholder="Contoh: Kendaraan Umum / Kendaraan Dinas / Roda 2" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-sky-500 outline-none" />
+          </div>
+        </div>
+
+        <!-- Maksud, Dasar, Tempat & Waktu -->
+        <div class="border-t border-slate-100 pt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Maksud Perjalanan Dinas (Untuk pada SPT) *</label>
+            <textarea id="inp-maksud" rows="2" required placeholder="Contoh: Laporan SPJ gaji ASN dan Pw" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-sky-500 outline-none"></textarea>
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Dasar Surat Tugas (Untuk Halaman SPT)</label>
+            <input type="text" id="inp-dasar" value="-" placeholder="Isi nomor surat undangan/edaran jika ada, atau biarkan '-'" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-sky-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Tempat Berangkat *</label>
+            <input type="text" id="inp-berangkat" value="SMP Negeri 1 Tempuran" required class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-sky-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Tempat Tujuan *</label>
+            <input type="text" id="inp-tujuan" required placeholder="Contoh: Disdikbud Kab. Magelang" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-sky-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Kota Tujuan pada Visum Belakang ("Ke : ...")</label>
+            <input type="text" id="inp-kota-visum" value="Mungkid" placeholder="Contoh: Mungkid / Magelang" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-sky-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Lamanya Perjalanan Dinas * <span class="text-[11px] font-normal text-sky-600">(Otomatis dari tanggal)</span></label>
+            <input type="text" id="inp-lama" value="1 Hari" required placeholder="Contoh: 1 Hari / 2 Hari" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm bg-slate-50 font-semibold text-slate-800 focus:ring-2 focus:ring-sky-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Tanggal Berangkat *</label>
+            <input type="date" id="inp-tgl-berangkat" required onchange="syncTanggalKembali()" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-sky-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Tanggal Kembali *</label>
+            <input type="date" id="inp-tgl-kembali" required onchange="hitungLamaPerjalanan()" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-sky-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Waktu Mulai Tugas (Pada SPT)</label>
+            <input type="text" id="inp-waktu-mulai" value="13:00" placeholder="Contoh: 08:00 atau 13:00" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-sky-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Waktu Selesai Tugas (Pada SPT)</label>
+            <input type="text" id="inp-waktu-selesai" value="Selesai" placeholder="Contoh: Selesai atau 15:00" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-sky-500 outline-none" />
+          </div>
+        </div>
+
+        <!-- Pengikut (Bisa Siswa / Pendamping) -->
+        <div class="border-t border-slate-100 pt-5">
+          <div class="flex items-center justify-between mb-2">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">Pengikut Perjalanan Dinas (Opsional)</label>
+              <p class="text-[11px] text-slate-500">Dapat diisi rekan guru atau daftar siswa peserta lomba jika berangkat bersama.</p>
+            </div>
+            <button type="button" onclick="addPengikutRow()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold rounded-xl">
+              + Tambah Pengikut
+            </button>
+          </div>
+          <div id="pengikut-list-container" class="space-y-2">
+            <!-- Baris pengikut dinamis -->
+          </div>
+        </div>
+
+        <!-- Pembebanan Anggaran & Tanggal Dikeluarkan Surat -->
+        <div class="border-t border-slate-100 pt-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">8.a. Pembebanan Anggaran - Instansi</label>
+            <input type="text" id="inp-anggaran-instansi" value="SMP Negeri 1 Tempuran" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-sky-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">8.b. Pasal Anggaran</label>
+            <select id="inp-anggaran-pasal-select" onchange="togglePasalLainnya()" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm bg-white focus:ring-2 focus:ring-sky-500 outline-none">
+              <option value="-">- (Strip)</option>
+              <option value="Dana BOSP">Dana BOSP</option>
+              <option value="DAK">DAK</option>
+              <option value="Lainnya">Lainnya...</option>
+            </select>
+            <input type="text" id="inp-anggaran-pasal-custom" placeholder="Tuliskan sumber/pasal anggaran..." class="hidden mt-2 w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-sky-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">9. Keterangan Lain-lain</label>
+            <input type="text" id="inp-keterangan" value="-" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-sky-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Dikeluarkan di</label>
+            <input type="text" id="inp-tempat-surat" value="Tempuran" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-sky-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Pada Tanggal Surat *</label>
+            <input type="date" id="inp-tgl-surat" required class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-sky-500 outline-none" />
+          </div>
+          <div id="admin-nomor-direct-box" class="hidden">
+            <label class="block text-xs font-semibold text-emerald-700 mb-1">Nomor Surat (Khusus Admin TU)</label>
+            <input type="text" id="inp-nomor-admin" placeholder="Otomatis terisi jika disetujui" class="w-full px-3 py-2.5 border border-emerald-300 bg-emerald-50/50 rounded-xl text-sm font-mono focus:ring-2 focus:ring-emerald-500 outline-none" />
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-end gap-3 pt-4 border-t border-slate-100">
+          <button type="button" onclick="switchTab('daftar')" class="px-5 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">Batal</button>
+          <button type="submit" class="px-6 py-2.5 rounded-xl text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white shadow-md transition">
+            Simpan & Lihat Pratinjau Dokumen
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 3: PRATINJAU & CETAK DOKUMEN RESMI (3 HALAMAN PERSIS CONTOH)     -->
+    <!-- =================================================================== -->
+    <section id="section-pratinjau" class="hidden">
+      <!-- Toolbar Kontrol Pratinjau -->
+      <div class="no-print bg-white rounded-2xl shadow-xs border border-slate-200 p-4 mb-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+          <label class="text-xs font-bold text-slate-700 whitespace-nowrap">Pilih Dokumen:</label>
+          <select id="select-preview-sppd" onchange="loadPreviewById(this.value)" class="px-3 py-2 border border-slate-300 rounded-xl text-xs sm:text-sm bg-slate-50 font-medium min-w-[260px] focus:ring-2 focus:ring-sky-500 outline-none">
+          </select>
+          <span id="preview-status-badge" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold"></span>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button id="btn-preview-approve" onclick="openApproveModalFromPreview()" class="hidden px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition">
+            ✓ Setujui & Beri Nomor Surat
+          </button>
+          <button id="btn-preview-edit" onclick="editCurrentPreview()" class="hidden px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition">
+            ✎ Edit Data (Admin)
+          </button>
+          <button id="btn-preview-print" onclick="handlePrintDocument()" class="px-5 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl shadow flex items-center gap-2 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+            Cetak / Simpan PDF (3 Halaman)
+          </button>
+        </div>
+      </div>
+
+      <!-- Peringatan Terkunci Cetak untuk Guru jika Belum Disetujui Admin -->
+      <div id="guru-print-lock-notice" class="no-print hidden bg-amber-50 border border-amber-300 text-amber-900 rounded-2xl p-4 mb-4 flex items-center gap-3 text-xs">
+        <span class="text-lg">🔒</span>
+        <div>
+          <p class="font-bold">Dokumen Belum Disetujui Admin TU</p>
+          <p>Sesuai ketentuan tata usaha, Guru hanya dapat mencetak SPPD & Surat Perintah Tugas setelah Admin TU memverifikasi dan menerbitkan nomor surat resmi.</p>
+        </div>
+      </div>
+
+      <!-- Area Kertas A4 (Halaman 1: SPPD Depan, Halaman 2: SPPD Belakang, Halaman 3: SPT) -->
+      <div id="preview-wrapper" class="preview-scroll-container">
+
+        <!-- =============================================================== -->
+        <!-- HALAMAN 1: SURAT PERINTAH PERJALANAN DINAS (SPPD) DEPAN         -->
+        <!-- =============================================================== -->
+        <div class="doc-sheet" id="sheet-sppd-depan">
+          <!-- KOP SURAT -->
+          <div id="kop-sppd-depan"></div>
+
+          <!-- BLOK LEMBAR KE / KODE NO / NOMOR (KANAN ATAS) -->
+          <div style="display: flex; justify-content: flex-end; margin-top: 2px; margin-bottom: 10px;">
+            <table style="border-collapse: collapse; font-size: 9.8pt; min-width: 280px;">
+              <tr>
+                <td style="padding: 1.5px 6px; width: 95px;">Lembar Ke</td>
+                <td style="padding: 1.5px 6px; width: 12px;">:</td>
+                <td style="padding: 1.5px 4px;" id="doc-lembar-ke"></td>
+              </tr>
+              <tr>
+                <td style="padding: 1.5px 6px;">Kode No</td>
+                <td style="padding: 1.5px 6px;">:</td>
+                <td style="padding: 1.5px 4px;" id="doc-kode-no"></td>
+              </tr>
+              <tr>
+                <td style="padding: 1.5px 6px;">Nomor</td>
+                <td style="padding: 1.5px 6px;">:</td>
+                <td style="padding: 1.5px 4px; font-weight: normal;" id="doc-nomor-sppd">94/192/04.55.SMP/ 2026</td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- JUDUL SPPD -->
+          <div style="text-align: center; margin-bottom: 12px;">
+            <div style="font-size: 11.5pt; font-weight: bold; text-decoration: underline; letter-spacing: 0.3px;">
+              SURAT PERINTAH PERJALANAN DINAS
+            </div>
+            <div style="font-size: 10.5pt; margin-top: 2px;">
+              (S P P D)
+            </div>
+          </div>
+
+          <!-- TABEL UTAMA SPPD (SESUAI GAMBAR 1) -->
+          <table class="doc-table">
+            <colgroup>
+              <col style="width: 34px;" />
+              <col style="width: 38%;" />
+              <col style="width: auto;" />
+            </colgroup>
+            <tbody>
+              <!-- Poin 1 -->
+              <tr>
+                <td style="text-align: center;">1.</td>
+                <td>Pejabat yang memberi perintah</td>
+                <td style="font-weight: bold;">KEPALA SEKOLAH</td>
+              </tr>
+
+              <!-- Poin 2 (2 baris untuk Nama & NIP seperti contoh gambar) -->
+              <tr>
+                <td rowspan="2" style="text-align: center;">2.</td>
+                <td rowspan="2" style="vertical-align: middle;">Nama Pegawai</td>
+                <td id="doc-nama-pegawai" style="font-weight: normal;">MUKARYONO</td>
+              </tr>
+              <tr>
+                <td id="doc-nip-pegawai">197608312014061002</td>
+              </tr>
+
+              <!-- Poin 3a, 3b, 3c -->
+              <tr>
+                <td style="text-align: center;">3.</td>
+                <td>
+                  <div style="display: flex;">
+                    <span style="width: 24px; display: inline-block;">a.</span>
+                    <span>Pangkat/Golongan</span>
+                  </div>
+                </td>
+                <td id="doc-pangkat">Pengatur Muda Tk.1, II/ b</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>
+                  <div style="display: flex;">
+                    <span style="width: 24px; display: inline-block;">b.</span>
+                    <span>Jabatan/Instansi</span>
+                  </div>
+                </td>
+                <td id="doc-jabatan">Operator Layanan Operasional/ SMP Negeri 1 Tempuran</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>
+                  <div style="display: flex;">
+                    <span style="width: 24px; display: inline-block;">c.</span>
+                    <span>Tingkat Biaya Perjalanan Dinas</span>
+                  </div>
+                </td>
+                <td id="doc-tingkat">Tingkat D</td>
+              </tr>
+
+              <!-- Poin 4 (Tanpa angka 4 di kolom kiri sesuai gambar contoh) -->
+              <tr>
+                <td></td>
+                <td style="padding-top: 8px; padding-bottom: 8px;">Maksud Perjalanan Dinas</td>
+                <td id="doc-maksud" style="padding-top: 8px; padding-bottom: 8px;">Laporan SPJ gaji ASN dan Pw</td>
+              </tr>
+
+              <!-- Poin 5 -->
+              <tr>
+                <td style="text-align: center;">5.</td>
+                <td>Kendaraan yang dipergunakan</td>
+                <td id="doc-kendaraan">Kendaraan Umum</td>
+              </tr>
+
+              <!-- Poin 6a, 6b & baris kosong pemisah -->
+              <tr>
+                <td style="text-align: center;">6.</td>
+                <td>
+                  <div style="display: flex;">
+                    <span style="width: 24px; display: inline-block;">a.</span>
+                    <span>Tempat berangkat</span>
+                  </div>
+                </td>
+                <td id="doc-berangkat">SMP Negeri 1 Tempuran</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>
+                  <div style="display: flex;">
+                    <span style="width: 24px; display: inline-block;">b.</span>
+                    <span>Tempat tujuan</span>
+                  </div>
+                </td>
+                <td id="doc-tujuan">Disdikbud Kab. Magelang</td>
+              </tr>
+              <tr>
+                <td style="height: 18px;"></td>
+                <td></td>
+                <td></td>
+              </tr>
+
+              <!-- Poin 7a, 7b, 7c -->
+              <tr>
+                <td style="text-align: center;">7.</td>
+                <td>
+                  <div style="display: flex;">
+                    <span style="width: 24px; display: inline-block;">a.</span>
+                    <span>Lamanya Perjalanan Dinas</span>
+                  </div>
+                </td>
+                <td id="doc-lama">1 Hari</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>
+                  <div style="display: flex;">
+                    <span style="width: 24px; display: inline-block;">b.</span>
+                    <span>Tanggal berangkat</span>
+                  </div>
+                </td>
+                <td id="doc-tgl-berangkat">13 November 2026</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>
+                  <div style="display: flex;">
+                    <span style="width: 24px; display: inline-block;">c.</span>
+                    <span>Tanggal kembali</span>
+                  </div>
+                </td>
+                <td id="doc-tgl-kembali">13 November 2026</td>
+              </tr>
+
+              <!-- Poin 8 Pengikut -->
+              <tr>
+                <td style="text-align: center;">8</td>
+                <td>Pengikut : Nama</td>
+                <td>
+                  <div style="display: flex; justify-content: space-between; padding-right: 24px;">
+                    <span>Tanggal Lahir</span>
+                    <span>Keterangan</span>
+                  </div>
+                </td>
+              </tr>
+              <tbody id="doc-pengikut-tbody">
+                <tr>
+                  <td></td>
+                  <td style="padding-left: 26px;">1</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td></td>
+                  <td style="padding-left: 26px;">2.</td>
+                  <td></td>
+                </tr>
+              </tbody>
+
+              <!-- Poin 8 Pembebanan Anggaran -->
+              <tr>
+                <td style="text-align: center;">8</td>
+                <td>Pembebanan Anggaran</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>
+                  <div style="display: flex;">
+                    <span style="width: 24px; display: inline-block;">a.</span>
+                    <span>Instansi</span>
+                  </div>
+                </td>
+                <td id="doc-anggaran-instansi">SMP Negeri 1 Tempuran</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>
+                  <div style="display: flex;">
+                    <span style="width: 24px; display: inline-block;">b.</span>
+                    <span>Pasal Anggaran</span>
+                  </div>
+                </td>
+                <td id="doc-anggaran-pasal">-</td>
+              </tr>
+
+              <!-- Poin 9 Keterangan lain-lain -->
+              <tr>
+                <td style="text-align: center;">9.</td>
+                <td>Keterangan lain-lain</td>
+                <td id="doc-keterangan">-</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- BLOK TANDA TANGAN KEPALA SEKOLAH (KANAN BAWAH) -->
+          <div style="display: flex; justify-content: flex-end; margin-top: 14px;">
+            <div style="width: 295px; font-size: 9.8pt;">
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="width: 115px; padding: 1.5px 0;">Dikeluarkan di</td>
+                  <td style="width: 14px; padding: 1.5px 0;">:</td>
+                  <td style="padding: 1.5px 0;" id="doc-tempat-surat">Tempuran</td>
+                </tr>
+                <tr>
+                  <td style="padding: 1.5px 0;">pada tanggal</td>
+                  <td style="padding: 1.5px 0;">:</td>
+                  <td style="padding: 1.5px 0;" id="doc-tgl-surat">13 November 2026</td>
+                </tr>
+              </table>
+
+              <div style="margin-top: 8px; font-weight: bold; text-align: center; padding-right: 18px;">
+                KEPALA SEKOLAH
+              </div>
+
+              <div style="height: 54px;"></div>
+
+              <div style="text-align: center; padding-right: 18px;">
+                <div id="doc-kepsek-nama" style="font-weight: bold; text-decoration: underline;">Drs. Indro Kadaryanto</div>
+                <div id="doc-kepsek-pangkat">Pembina Tingkat I</div>
+                <div id="doc-kepsek-nip">NIP. 196712271998021003</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- HALAMAN 2: SPPD BELAKANG / LEMBAR VISUM (SESUAI GAMBAR 2)       -->
+        <!-- =============================================================== -->
+        <div class="doc-sheet" id="sheet-sppd-belakang">
+          <table class="doc-table-visum" style="margin-top: 4px;">
+            <colgroup>
+              <col style="width: 30px;" />
+              <col style="width: 46%;" />
+              <col style="width: 28px;" />
+              <col style="width: auto;" />
+            </colgroup>
+            <tbody>
+              <!-- BAGIAN ATAS: KIRI (11) & KANAN (1. Berangkat dari & Bendahara BOSP) -->
+              <tr>
+                <td style="text-align: center;">11</td>
+                <td></td>
+                <td style="text-align: center;">1.</td>
+                <td style="padding: 0;">
+                  <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                      <td style="border: none; border-bottom: 1px solid #000; padding: 3px 6px; width: 112px;">Berangkat dari</td>
+                      <td style="border: none; border-bottom: 1px solid #000; padding: 3px 4px; width: 10px;">:</td>
+                      <td style="border: none; border-bottom: 1px solid #000; padding: 3px 6px;" id="visum-berangkat-dari">Tempuran</td>
+                    </tr>
+                    <tr>
+                      <td colspan="3" style="border: none; border-bottom: 1px solid #000; padding: 3px 6px;">(Tempat Kedudukan)</td>
+                    </tr>
+                    <tr>
+                      <td style="border: none; border-bottom: 1px solid #000; padding: 3px 6px;">Ke</td>
+                      <td style="border: none; border-bottom: 1px solid #000; padding: 3px 4px;">:</td>
+                      <td style="border: none; border-bottom: 1px solid #000; padding: 3px 6px;" id="visum-ke">Mungkid</td>
+                    </tr>
+                    <tr>
+                      <td style="border: none; border-bottom: 1px solid #000; padding: 3px 6px;">Pada Tanggal</td>
+                      <td style="border: none; border-bottom: 1px solid #000; padding: 3px 4px;">:</td>
+                      <td style="border: none; border-bottom: 1px solid #000; padding: 3px 6px;" id="visum-tgl-1">13 November 2026</td>
+                    </tr>
+                    <tr>
+                      <td colspan="3" style="border: none; padding: 8px 6px 2px 6px;">Bendahara BOSP,</td>
+                    </tr>
+                    <tr>
+                      <td colspan="3" style="border: none; height: 52px;"></td>
+                    </tr>
+                    <tr>
+                      <td colspan="3" style="border: none; padding: 2px 6px 4px 6px;">
+                        <div id="visum-bendahara-nama" style="text-decoration: underline;">NANIK YULIYATI, S.Pd.</div>
+                        <div id="visum-bendahara-nip">NIP. 197607162022212009</div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- BAGIAN II: TIBA DI TUJUAN (KIRI) & BERANGKAT DARI TUJUAN (KANAN) -->
+              <tr>
+                <td style="text-align: center;">II.</td>
+                <td style="padding: 0;">
+                  <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                      <td style="border: none; border-bottom: 1px solid #000; padding: 3px 6px; width: 102px;">Tiba</td>
+                      <td style="border: none; border-bottom: 1px solid #000; padding: 3px 4px; width: 10px;">:</td>
+                      <td style="border: none; border-bottom: 1px solid #000; padding: 3px 6px;" id="visum-tiba-2">Disdikbud Kab. Magelang</td>
+                    </tr>
+                    <tr>
+                      <td style="border: none; border-bottom: 1px solid #000; padding: 3px 6px;">Pada Tanggal</td>
+                      <td style="border: none; border-bottom: 1px solid #000; padding: 3px 4px;">:</td>
+                      <td style="border: none; border-bottom: 1px solid #000; padding: 3px 6px;" id="visum-tgl-2a">13 November 2026</td>
+                    </tr>
+                    <tr>
+                      <td style="border: none; padding: 3px 6px;">Kepala</td>
+                      <td style="border: none; padding: 3px 4px;">:</td>
+                      <td style="border: none; padding: 3px 6px;">......................</td>
+                    </tr>
+                    <tr>
+                      <td colspan="3" style="border: none; height: 86px;"></td>
+                    </tr>
+                  </table>
+                </td>
+                <td></td>
+                <td style="padding: 0;">
+                  <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                      <td style="border: none; border-bottom: 1px solid #000; padding: 3px 6px; width: 112px;">Tiba</td>
+                      <td style="border: none; border-bottom: 1px solid #000; padding: 3px 4px; width: 10px;">:</td>
+                      <td style="border: none; border-bottom: 1px solid #000; padding: 3px 6px;" id="visum-tiba-2b">Disdikbud Kab. Magelang</td>
+                    </tr>
+                    <tr>
+                      <td style="border: none; border-bottom: 1px solid #000; padding: 3px 6px;">Pada Tanggal</td>
+                      <td style="border: none; border-bottom: 1px solid #000; padding: 3px 4px;">:</td>
+                      <td style="border: none; border-bottom: 1px solid #000; padding: 3px 6px;" id="visum-tgl-2b">13 November 2026</td>
+                    </tr>
+                    <tr>
+                      <td style="border: none; padding: 3px 6px;">Kepala</td>
+                      <td style="border: none; padding: 3px 4px;">:</td>
+                      <td style="border: none; padding: 3px 6px;">......................</td>
+                    </tr>
+                    <tr>
+                      <td colspan="3" style="border: none; height: 86px;"></td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- BARIS PEMISAH KOSONG TIPIS SEPERTI CONTOH GAMBAR 2 -->
+              <tr>
+                <td style="height: 14px;"></td>
+                <td></td>
+                <td></td>
+                <td></td>
+              </tr>
+
+              <!-- BAGIAN IV: TIBA KEMBALI DI TEMPURAN & PERNYATAAN TELAH DIPERIKSA -->
+              <tr>
+                <td style="text-align: center;">IV.</td>
+                <td style="padding: 0;">
+                  <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                      <td style="border: none; border-bottom: 1px solid #000; padding: 3px 6px; width: 102px;">Tiba</td>
+                      <td style="border: none; border-bottom: 1px solid #000; padding: 3px 4px; width: 10px;">:</td>
+                      <td style="border: none; border-bottom: 1px solid #000; padding: 3px 6px;" id="visum-tiba-kembali">Tempuran</td>
+                    </tr>
+                    <tr>
+                      <td style="border: none; border-bottom: 1px solid #000; padding: 3px 6px;">Pada Tanggal</td>
+                      <td style="border: none; border-bottom: 1px solid #000; padding: 3px 4px;">:</td>
+                      <td style="border: none; border-bottom: 1px solid #000; padding: 3px 6px;" id="visum-tgl-kembali">13 November 2026</td>
+                    </tr>
+                    <tr>
+                      <td colspan="3" style="border: none; padding: 4px 6px;">Penanggungjawab Anggaran</td>
+                    </tr>
+                    <tr>
+                      <td colspan="3" style="border: none; height: 64px;"></td>
+                    </tr>
+                    <tr>
+                      <td colspan="3" style="border: none; padding: 2px 6px 4px 6px;">
+                        <div id="visum-kepsek-nama" style="font-weight: bold; text-decoration: underline;">Drs. Indro Kadaryanto</div>
+                        <div id="visum-kepsek-nip">NIP. 196712271998021003</div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+                <td colspan="2" style="padding: 6px 8px; vertical-align: top; line-height: 1.35;">
+                  Telah diperiksa, dengan keterangan bahwa perjalanan tersebut di atas dilakukan atas perintahnya dan semata-mata untuk kepentingan jabatan dalam waktu yang sesingkat-singkatnya
+                </td>
+              </tr>
+
+              <!-- BAGIAN V: CATATAN LAIN-LAIN -->
+              <tr>
+                <td style="text-align: center;">V.</td>
+                <td colspan="3" style="padding: 4px 6px;">Catatan Lain-lain</td>
+              </tr>
+
+              <!-- BAGIAN VI: PERHATIAN -->
+              <tr>
+                <td style="text-align: center; vertical-align: middle;">VI.</td>
+                <td colspan="3" style="padding: 6px 6px; line-height: 1.35;">
+                  <div>PERHATIAN:</div>
+                  <div>
+                    Pengguna Anggaran/Kuasa Pengguna Anggaran yang menerbitkan SPD, pejabat/pegawai/pihak lain yang melakukan perjalanan dinas, para pejabat yang mengesahkan tanggal berangkat/tiba, serta bendahara pengeluaran bertanggung jawab berdasarkan peraturan-peraturan Keuangan Daerah apabila negara menderita rugi akibat kesalahan, kelalaian, dan kealpaannya.
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- HALAMAN 3: SURAT PERINTAH TUGAS (SPT) (SESUAI GAMBAR 3)         -->
+        <!-- =============================================================== -->
+        <div class="doc-sheet" id="sheet-spt">
+          <!-- KOP SURAT -->
+          <div id="kop-spt"></div>
+
+          <!-- JUDUL SURAT PERINTAH TUGAS -->
+          <div style="text-align: center; margin-top: 10px; margin-bottom: 18px;">
+            <div style="font-size: 12pt; font-weight: bold; text-decoration: underline; letter-spacing: 0.4px;">
+              SURAT PERINTAH TUGAS
+            </div>
+            <div style="font-size: 10.2pt; margin-top: 3px;">
+              NOMOR : <span id="spt-nomor">94/192/04.55.SMP/ 2026</span>
+            </div>
+          </div>
+
+          <!-- DASAR -->
+          <table style="width: 100%; border-collapse: collapse; font-size: 10pt; margin-bottom: 14px;">
+            <tr>
+              <td style="width: 115px; font-weight: bold; vertical-align: top; padding: 3px 0;">Dasar</td>
+              <td style="width: 18px; vertical-align: top; padding: 3px 0;">:</td>
+              <td style="vertical-align: top; padding: 3px 0;" id="spt-dasar">-</td>
+            </tr>
+          </table>
+
+          <!-- MEMERINTAHKAN -->
+          <div style="text-align: center; font-weight: bold; font-size: 10.5pt; margin: 12px 0 14px 0; letter-spacing: 0.5px;">
+            MEMERINTAHKAN
+          </div>
+
+          <!-- KEPADA -->
+          <table style="width: 100%; border-collapse: collapse; font-size: 10pt; margin-bottom: 14px;">
+            <tr>
+              <td style="width: 115px; font-weight: bold; vertical-align: top; padding: 3px 0;">Kepada</td>
+              <td style="width: 18px; vertical-align: top; padding: 3px 0;">:</td>
+              <td style="vertical-align: top; padding: 0;">
+                <table style="width: 100%; border-collapse: collapse;">
+                  <tr>
+                    <td style="width: 135px; font-weight: bold; padding: 3px 0; vertical-align: top;">Nama</td>
+                    <td style="width: 16px; padding: 3px 0; vertical-align: top;">:</td>
+                    <td style="padding: 3px 0; vertical-align: top;" id="spt-nama">MUKARYONO</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight: bold; padding: 3px 0; vertical-align: top;" id="spt-lbl-pangkat">Pangkat/Gol.</td>
+                    <td style="padding: 3px 0; vertical-align: top;">:</td>
+                    <td style="padding: 3px 0; vertical-align: top;" id="spt-pangkat">Pengatur Muda Tk.1, II/ b</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight: bold; padding: 3px 0; vertical-align: top;" id="spt-lbl-nip">NIP</td>
+                    <td style="padding: 3px 0; vertical-align: top;">:</td>
+                    <td style="padding: 3px 0; vertical-align: top;" id="spt-nip">197608312014061002</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight: bold; padding: 3px 0; vertical-align: top;" id="spt-lbl-jabatan">Jabatan</td>
+                    <td style="padding: 3px 0; vertical-align: top;">:</td>
+                    <td style="padding: 3px 0; vertical-align: top;" id="spt-jabatan">Operator Layanan Operasional/ SMP Negeri 1 Tempuran</td>
+                  </tr>
+                </table>
+                <!-- Daftar Pengikut di SPT jika ada -->
+                <div id="spt-pengikut-container" style="margin-top: 6px;"></div>
+              </td>
+            </tr>
+          </table>
+
+          <!-- UNTUK -->
+          <table style="width: 100%; border-collapse: collapse; font-size: 10pt; margin-bottom: 16px;">
+            <tr>
+              <td style="width: 115px; font-weight: bold; vertical-align: top; padding: 3px 0;">Untuk</td>
+              <td style="width: 18px; vertical-align: top; padding: 3px 0;">:</td>
+              <td style="vertical-align: top; padding: 0;">
+                <div id="spt-maksud" style="padding: 3px 0 6px 0; line-height: 1.35;">Laporan SPJ gaji ASN dan Pw</div>
+                <table style="border-collapse: collapse; font-size: 10pt;">
+                  <tr>
+                    <td style="width: 135px; padding: 3px 0;">Hari</td>
+                    <td style="width: 16px; padding: 3px 0;">:</td>
+                    <td style="padding: 3px 8px 3px 0;" id="spt-hari-mulai">Jumat</td>
+                    <td style="padding: 3px 12px; font-weight: bold; font-size: 9pt;">s/d</td>
+                    <td style="padding: 3px 0;" id="spt-hari-selesai">Jumat</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 3px 0;">Waktu</td>
+                    <td style="padding: 3px 0;">:</td>
+                    <td style="padding: 3px 8px 3px 0; font-weight: bold;" id="spt-waktu-mulai">13:00</td>
+                    <td style="padding: 3px 12px; font-weight: bold; text-align: center;">-</td>
+                    <td style="padding: 3px 0; font-weight: bold;" id="spt-waktu-selesai">Selesai</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 3px 0;">Tanggal</td>
+                    <td style="padding: 3px 0;">:</td>
+                    <td style="padding: 3px 8px 3px 0;" id="spt-tgl-mulai">13 November 2026</td>
+                    <td style="padding: 3px 12px; text-align: center;">-</td>
+                    <td style="padding: 3px 0;" id="spt-tgl-selesai">13 November 2026</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 3px 0;">Tempat</td>
+                    <td style="padding: 3px 0;">:</td>
+                    <td colspan="3" style="padding: 3px 0;" id="spt-tempat">Disdikbud Kab. Magelang</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+
+          <!-- KALIMAT PENUTUP SPT -->
+          <div style="font-size: 10pt; line-height: 1.4; margin-top: 12px; margin-bottom: 24px;">
+            Demikian surat tugas ini kami buat untuk dilaksanakan dengan penuh rasa tanggung jawab dan atas perhatiannya kami sampaikan terima kasih
+          </div>
+
+          <!-- BLOK TANDA TANGAN KEPALA SEKOLAH (SPT) -->
+          <div style="display: flex; justify-content: flex-end; margin-top: 16px;">
+            <div style="width: 295px; font-size: 10pt;">
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="width: 115px; padding: 2px 0;">Dikeluarkan di</td>
+                  <td style="width: 14px; padding: 2px 0;">:</td>
+                  <td style="padding: 2px 0;" id="spt-tempat-surat">Tempuran</td>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 0;">pada tanggal</td>
+                  <td style="padding: 2px 0;">:</td>
+                  <td style="padding: 2px 0;" id="spt-tgl-surat">13 November 2026</td>
+                </tr>
+              </table>
+
+              <div style="margin-top: 12px; font-weight: bold;">
+                KEPALA SEKOLAH
+              </div>
+
+              <div style="height: 58px;"></div>
+
+              <div>
+                <div id="spt-kepsek-nama" style="font-weight: bold; text-decoration: underline;">Drs. Indro Kadaryanto</div>
+                <div id="spt-kepsek-pangkat">Pembina Tingkat I</div>
+                <div id="spt-kepsek-nip">NIP. 196712271998021003</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 3B: RIWAYAT & REKAP PERJALANAN DINAS (MINGGUAN/BULANAN/TAHUNAN) -->
+    <!-- =================================================================== -->
+    <section id="section-rekap" class="no-print hidden space-y-6">
+      <div class="bg-white rounded-2xl shadow-xs border border-slate-200 p-4 sm:p-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-5">
+          <div>
+            <h2 class="text-lg font-bold text-slate-800">Riwayat & Rekapitulasi Perjalanan Dinas</h2>
+            <p class="text-xs text-slate-500">Rekap otomatis perjalanan dinas Guru, Staf, dan Siswa berdasarkan periode mingguan, bulanan, maupun tahunan.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="rekap-periode" onchange="onRekapPeriodeChange()" class="px-3 py-2 border border-slate-300 rounded-xl text-xs font-semibold bg-slate-50 focus:ring-2 focus:ring-sky-500 outline-none">
+              <option value="bulanan">Periode Bulanan</option>
+              <option value="mingguan">Periode Mingguan</option>
+              <option value="tahunan">Periode Tahunan</option>
+              <option value="semua">Semua Riwayat</option>
+            </select>
+            <input type="month" id="rekap-filter-bulan" onchange="renderRekapPerjalanan()" class="px-3 py-2 border border-slate-300 rounded-xl text-xs bg-white focus:ring-2 focus:ring-sky-500 outline-none" />
+            <input type="week" id="rekap-filter-minggu" onchange="renderRekapPerjalanan()" class="hidden px-3 py-2 border border-slate-300 rounded-xl text-xs bg-white focus:ring-2 focus:ring-sky-500 outline-none" />
+            <select id="rekap-filter-tahun" onchange="renderRekapPerjalanan()" class="hidden px-3 py-2 border border-slate-300 rounded-xl text-xs bg-white focus:ring-2 focus:ring-sky-500 outline-none"></select>
+            <select id="rekap-filter-status" onchange="renderRekapPerjalanan()" class="px-3 py-2 border border-slate-300 rounded-xl text-xs bg-white focus:ring-2 focus:ring-sky-500 outline-none">
+              <option value="approved">Hanya Disetujui (Terlaksana)</option>
+              <option value="all">Semua Status (Termasuk Menunggu)</option>
+            </select>
+            <button onclick="printRekapLaporan()" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl shadow-xs flex items-center gap-1.5">
+              🖨 Cetak Rekap
+            </button>
+          </div>
+        </div>
+
+        <!-- Ringkasan Statistik Periode -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div class="bg-sky-50 border border-sky-200 rounded-2xl p-4">
+            <p class="text-xs font-semibold text-sky-800">Total SPPD / Perjalanan</p>
+            <p id="stat-total-sppd" class="text-2xl font-bold text-sky-950 mt-1">0 Kali</p>
+          </div>
+          <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
+            <p class="text-xs font-semibold text-emerald-800">Total Akumulasi Hari Dinas</p>
+            <p id="stat-total-hari" class="text-2xl font-bold text-emerald-950 mt-1">0 Hari</p>
+          </div>
+          <div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-4">
+            <p class="text-xs font-semibold text-indigo-800">Jumlah Personel Bertugas</p>
+            <p id="stat-total-personel" class="text-2xl font-bold text-indigo-950 mt-1">0 Orang</p>
+          </div>
+        </div>
+
+        <!-- Tabel 1: Rekapitulasi Per Guru / Staf / Siswa -->
+        <div class="mb-6">
+          <h3 class="text-sm font-bold text-slate-800 mb-2.5">A. Rekapitulasi Jumlah Perjalanan Per Guru / Staf / Siswa</h3>
+          <div class="overflow-x-auto border border-slate-200 rounded-xl">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-[11px] uppercase text-slate-600">
+                  <th class="py-2.5 px-3 w-10 text-center">No</th>
+                  <th class="py-2.5 px-3">Nama Guru / Staf / Siswa</th>
+                  <th class="py-2.5 px-3">NIP / NISN</th>
+                  <th class="py-2.5 px-3">Kategori</th>
+                  <th class="py-2.5 px-3 text-center">Jumlah Tugas</th>
+                  <th class="py-2.5 px-3 text-center">Total Hari</th>
+                  <th class="py-2.5 px-3">Daftar Tujuan & Tanggal</th>
+                </tr>
+              </thead>
+              <tbody id="rekap-personel-tbody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tabel 2: Rincian Log Riwayat SPPD Periode Terpilih -->
+        <div>
+          <h3 class="text-sm font-bold text-slate-800 mb-2.5">B. Rincian Log Riwayat SPPD Terlaksana</h3>
+          <div class="overflow-x-auto border border-slate-200 rounded-xl">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-[11px] uppercase text-slate-600">
+                  <th class="py-2.5 px-3">Tanggal</th>
+                  <th class="py-2.5 px-3">Nomor Surat</th>
+                  <th class="py-2.5 px-3">Nama Pelaksana</th>
+                  <th class="py-2.5 px-3">Maksud Perjalanan</th>
+                  <th class="py-2.5 px-3">Tujuan</th>
+                  <th class="py-2.5 px-3">Durasi</th>
+                  <th class="py-2.5 px-3">Anggaran</th>
+                </tr>
+              </thead>
+              <tbody id="rekap-detail-tbody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 4: MASTER DATA PEGAWAI, SISWA, PEJABAT & LOGO                   -->
+    <!-- =================================================================== -->
+    <section id="section-master" class="no-print hidden space-y-6">
+
+      <!-- Pengaturan Identitas & Nama Sekolah -->
+      <div class="bg-white rounded-2xl shadow-xs border border-sky-200 p-4 sm:p-6">
+        <div class="flex items-center justify-between mb-1">
+          <h2 class="text-lg font-bold text-slate-800">Pengaturan Identitas & Nama Sekolah (Kop Surat)</h2>
+          <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-100 text-sky-800">Multi-Sekolah</span>
+        </div>
+        <p class="text-xs text-slate-500 mb-4">Ubah nama sekolah, instansi pemerintah, alamat, dan kontak agar format kop surat maupun isian default SPPD menyesuaikan sekolah Anda.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Pemerintah Kabupaten / Kota</label>
+            <input type="text" id="set-pemda" placeholder="PEMERINTAH KABUPATEN MAGELANG" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Dinas / Instansi Induk</label>
+            <input type="text" id="set-dinas" placeholder="DINAS PENDIDIKAN DAN KEBUDAYAAN" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Sekolah *</label>
+            <input type="text" id="set-sekolah-nama" placeholder="SMP Negeri 1 Tempuran" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm font-semibold" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Alamat Sekolah & Telepon</label>
+            <input type="text" id="set-sekolah-alamat" placeholder="JL. Magelang-Purworejo Km.11 Tempuran Telp.(0293)3215018" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm" />
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Kode Pos & Email Sekolah</label>
+            <input type="text" id="set-sekolah-kontak" placeholder="Kode Pos 56161 Email : smpntempuransatu@yahoo.co.id" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm" />
+          </div>
+        </div>
+        <div class="mt-4 flex justify-end">
+          <button onclick="saveSchoolIdentity()" class="px-5 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl shadow-xs">
+            Simpan Identitas Sekolah
+          </button>
+        </div>
+      </div>
+
+      <!-- Pengaturan Akun Khusus Admin TU -->
+      <div class="bg-white rounded-2xl shadow-xs border border-amber-200 p-4 sm:p-6">
+        <div class="flex items-center justify-between mb-1">
+          <h2 class="text-lg font-bold text-slate-800">Keamanan Akun Khusus Admin TU</h2>
+          <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800">Khusus Admin</span>
+        </div>
+        <p class="text-xs text-slate-500 mb-4">Ubah username dan password login Admin TU agar akses persetujuan, edit SPPD, dan penomoran tetap aman.</p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Username Admin TU</label>
+            <input type="text" id="set-admin-user" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm font-mono" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Password Baru Admin TU</label>
+            <input type="text" id="set-admin-pass" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm font-mono" />
+          </div>
+        </div>
+        <div class="mt-4 flex justify-end">
+          <button onclick="saveAdminCredentials()" class="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold rounded-xl shadow-xs">
+            Simpan Akun Admin
+          </button>
+        </div>
+      </div>
+
+      <!-- Pengaturan Pejabat & Penomoran -->
+      <div class="bg-white rounded-2xl shadow-xs border border-slate-200 p-4 sm:p-6">
+        <h2 class="text-lg font-bold text-slate-800 mb-1">Pengaturan Pejabat Penandatangan & Format Nomor</h2>
+        <p class="text-xs text-slate-500 mb-4">Data ini otomatis muncul pada seluruh cetakan SPPD Depan, Visum Belakang, dan Surat Perintah Tugas.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Kepala Sekolah</label>
+            <input type="text" id="set-kepsek-nama" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Pangkat/Gol Kepala Sekolah</label>
+            <input type="text" id="set-kepsek-pangkat" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">NIP Kepala Sekolah</label>
+            <input type="text" id="set-kepsek-nip" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Bendahara BOSP (Visum Halaman 2)</label>
+            <input type="text" id="set-bendahara-nama" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">NIP Bendahara BOSP</label>
+            <input type="text" id="set-bendahara-nip" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Nomor Urut Terakhir & Kode Klasifikasi</label>
+            <div class="flex gap-2">
+              <input type="number" id="set-last-nomor" class="w-24 px-3 py-2 border border-slate-300 rounded-xl text-sm font-mono" />
+              <input type="text" id="set-kode-surat" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm font-mono" />
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 flex justify-end">
+          <button onclick="saveMasterSettings()" class="px-5 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl shadow-xs">
+            Simpan Pengaturan Pejabat
+          </button>
+        </div>
+      </div>
+
+      <!-- Pengaturan Logo Kop Surat -->
+      <div class="bg-white rounded-2xl shadow-xs border border-slate-200 p-4 sm:p-6">
+        <h2 class="text-lg font-bold text-slate-800 mb-1">Logo Kop Surat Resmi</h2>
+        <p class="text-xs text-slate-500 mb-4">Aplikasi menggunakan logo asli Kabupaten Magelang & SMP Negeri 1 Tempuran. Anda juga dapat mengganti/memperbarui gambar logo di bawah ini tanpa merubah bentuk atau transparansi aslinya.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="border border-slate-200 rounded-xl p-4 flex items-center gap-4">
+            <div id="preview-logo-kiri-box" class="w-16 h-16 flex items-center justify-center bg-slate-50 rounded-lg border border-slate-200 p-1"></div>
+            <div class="flex-1">
+              <p class="text-xs font-bold text-slate-800">Logo Kiri (Kabupaten Magelang)</p>
+              <input type="file" accept="image/*" onchange="uploadCustomLogo(event, 'kiri')" class="mt-2 block w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100" />
+            </div>
+          </div>
+          <div class="border border-slate-200 rounded-xl p-4 flex items-center gap-4">
+            <div id="preview-logo-kanan-box" class="w-16 h-16 flex items-center justify-center bg-slate-50 rounded-lg border border-slate-200 p-1"></div>
+            <div class="flex-1">
+              <p class="text-xs font-bold text-slate-800">Logo Kanan (SMP Negeri 1 Tempuran)</p>
+              <input type="file" accept="image/*" onchange="uploadCustomLogo(event, 'kanan')" class="mt-2 block w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100" />
+            </div>
+          </div>
+        </div>
+        <div class="mt-3 flex justify-between items-center">
+          <button onclick="resetLogos()" class="text-xs text-rose-600 hover:underline font-medium">Kembalikan ke Logo Default</button>
+          <div class="flex gap-2">
+            <button onclick="exportBackupJson()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold">Export JSON</button>
+            <label class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold cursor-pointer">
+              Import JSON
+              <input type="file" accept=".json" onchange="importBackupJson(event)" class="hidden" />
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Master Database Guru/Staf & Siswa -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Master Guru & Staf -->
+        <div class="bg-white rounded-2xl shadow-xs border border-slate-200 p-4 sm:p-6">
+          <h3 class="text-base font-bold text-slate-800 mb-3">Database Guru & Staf</h3>
+          <form onsubmit="addMasterPegawai(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4 bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <input type="text" id="m-peg-nama" required placeholder="Nama Lengkap & Gelar" class="px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs" />
+            <input type="text" id="m-peg-nip" placeholder="NIP / NIPPPK" class="px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs" />
+            <input type="text" id="m-peg-pangkat" placeholder="Pangkat / Golongan" class="px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs" />
+            <input type="text" id="m-peg-jabatan" required placeholder="Jabatan / Instansi" class="px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs" />
+            <button type="submit" class="sm:col-span-2 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-bold">+ Tambah Guru / Staf</button>
+          </form>
+          <div id="list-master-pegawai" class="divide-y divide-slate-100 max-h-64 overflow-y-auto text-xs"></div>
+        </div>
+
+        <!-- Master Siswa -->
+        <div class="bg-white rounded-2xl shadow-xs border border-slate-200 p-4 sm:p-6">
+          <h3 class="text-base font-bold text-slate-800 mb-3">Database Siswa (Lomba / Kegiatan)</h3>
+          <form onsubmit="addMasterSiswa(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4 bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <input type="text" id="m-sis-nama" required placeholder="Nama Lengkap Siswa" class="px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs" />
+            <input type="text" id="m-sis-nis" placeholder="NIS / NISN" class="px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs" />
+            <input type="text" id="m-sis-kelas" required placeholder="Kelas (Misal: Kelas VIII A)" class="sm:col-span-2 px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs" />
+            <button type="submit" class="sm:col-span-2 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold">+ Tambah Data Siswa</button>
+          </form>
+          <div id="list-master-siswa" class="divide-y divide-slate-100 max-h-64 overflow-y-auto text-xs"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="no-print border-t border-slate-200 bg-white py-3.5 px-4 text-center text-xs text-slate-500">
+    Aplikasi E-SPPD & SPT Digital • Dikembangkan oleh <strong class="text-slate-700">Mas Operator Tem1</strong>
+  </footer>
+
+  <script>
+    // =========================================================================
+    // 1. LOGO RESMI DEFAULT (KABUPATEN MAGELANG & SMP NEGERI 1 TEMPURAN)
+    // =========================================================================
+    const DEFAULT_LOGO_MAGELANG_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 260" width="220" height="260">
+      <path d="M12,12 L208,12 L208,145 C208,205 155,235 110,252 C65,235 12,205 12,145 Z" fill="#15803d" stroke="#facc15" stroke-width="7"/>
+      <path d="M20,20 L200,20 L200,143 C200,197 151,225 110,241 C69,225 20,197 20,143 Z" fill="none" stroke="#111827" stroke-width="2.5"/>
+      <rect x="64" y="24" width="92" height="36" fill="#dc2626" stroke="#facc15" stroke-width="3"/>
+      <text x="110" y="39" text-anchor="middle" fill="#fef08a" font-family="Arial,sans-serif" font-weight="bold" font-size="11.5">KABUPATEN</text>
+      <text x="110" y="54" text-anchor="middle" fill="#fef08a" font-family="Arial,sans-serif" font-weight="bold" font-size="12.5">MAGELANG</text>
+      <path d="M64,66 L156,66 L156,142 C156,172 135,188 110,196 C85,188 64,172 64,142 Z" fill="#dc2626" stroke="#facc15" stroke-width="3"/>
+      <polygon points="110,72 114,83 126,83 116,90 120,101 110,94 100,101 104,90 94,83 106,83" fill="#fef08a" stroke="#111827" stroke-width="1"/>
+      <polygon points="72,175 110,152 148,175 110,190" fill="#facc15" stroke="#111827" stroke-width="1.5"/>
+      <rect x="82" y="156" width="56" height="9" fill="#ffffff" stroke="#111827" stroke-width="1.5"/>
+      <rect x="88" y="147" width="44" height="9" fill="#ffffff" stroke="#111827" stroke-width="1.5"/>
+      <path d="M92,147 C92,122 100,113 110,113 C120,113 128,122 128,147 Z" fill="#ffffff" stroke="#111827" stroke-width="1.5"/>
+      <rect x="104" y="102" width="12" height="11" fill="#ffffff" stroke="#111827" stroke-width="1.5"/>
+      <polygon points="110,118 114,164 106,164" fill="#facc15" stroke="#111827" stroke-width="1"/>
+      <g fill="#facc15" stroke="#111827" stroke-width="0.8">
+        <ellipse cx="176" cy="48" rx="4" ry="10" transform="rotate(20 176 48)"/>
+        <ellipse cx="178" cy="68" rx="4" ry="10" transform="rotate(20 178 68)"/>
+        <ellipse cx="178" cy="88" rx="4" ry="10" transform="rotate(20 178 88)"/>
+        <ellipse cx="176" cy="108" rx="4" ry="10" transform="rotate(20 176 108)"/>
+        <ellipse cx="172" cy="128" rx="4" ry="10" transform="rotate(20 172 128)"/>
+        <ellipse cx="166" cy="148" rx="4" ry="10" transform="rotate(20 166 148)"/>
+      </g>
+      <g fill="#ffffff" stroke="#111827" stroke-width="0.8">
+        <circle cx="42" cy="52" r="7"/><circle cx="42" cy="76" r="7"/><circle cx="42" cy="100" r="7"/><circle cx="44" cy="124" r="7"/><circle cx="48" cy="148" r="7"/>
+      </g>
+      <path d="M62,212 Q110,226 158,212 L152,224 Q110,236 68,224 Z" fill="#dc2626" stroke="#111827" stroke-width="1.2"/>
+      <path d="M78,218 Q110,228 142,218 L139,226 Q110,234 81,226 Z" fill="#ffffff" stroke="#111827" stroke-width="1"/>
+    </svg>`;
+
+    const DEFAULT_LOGO_SMP_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 250" width="260" height="250">
+      <path d="M130,10 C152,42 185,55 215,62 C210,92 225,115 248,125 C222,145 215,175 225,205 C192,202 155,215 130,240 C105,215 68,202 35,205 C45,175 38,145 12,125 C35,115 50,92 45,62 C75,55 108,42 130,10 Z" fill="#ffffff" stroke="#111827" stroke-width="3"/>
+      <path d="M130,22 C150,50 180,62 206,68 C202,95 215,116 236,125 C212,143 206,170 215,196 C185,193 152,205 130,228 C108,205 75,193 45,196 C54,170 48,143 24,125 C45,116 58,95 54,68 C80,62 110,50 130,22 Z" fill="#7dd3fc" stroke="#111827" stroke-width="3.5"/>
+      <defs>
+        <path id="arcSmpText" d="M 66,130 A 64,64 0 1,1 194,130" />
+      </defs>
+      <text fill="#dc2626" stroke="#111827" stroke-width="0.4" font-family="Arial Black,Impact,sans-serif" font-weight="bold" font-size="17.5">
+        <textPath href="#arcSmpText" startOffset="50%" text-anchor="middle">SMP NEGERI 1 TEMPURAN</textPath>
+      </text>
+      <polygon points="96,175 130,185 164,175 158,155 130,162 102,155" fill="#e5e7eb" stroke="#111827" stroke-width="1.5"/>
+      <path d="M112,162 C112,135 120,124 130,124 C140,124 148,135 148,162 Z" fill="#f3f4f6" stroke="#111827" stroke-width="1.5"/>
+      <rect x="125" y="108" width="10" height="16" rx="3" fill="#f3f4f6" stroke="#111827" stroke-width="1.5"/>
+      <polygon points="130,132 135,178 125,178" fill="#ffffff" stroke="#111827" stroke-width="1.2"/>
+      <g fill="#111827">
+        <circle cx="84" cy="166" r="8"/><circle cx="82" cy="146" r="8"/><circle cx="88" cy="127" r="8"/><circle cx="98" cy="112" r="7.5"/><circle cx="110" cy="100" r="6.5"/>
+      </g>
+      <g fill="#fef08a" stroke="#111827" stroke-width="1">
+        <ellipse cx="176" cy="162" rx="4" ry="9" transform="rotate(25 176 162)"/>
+        <ellipse cx="180" cy="146" rx="4" ry="9" transform="rotate(20 180 146)"/>
+        <ellipse cx="180" cy="130" rx="4" ry="9" transform="rotate(10 180 130)"/>
+        <ellipse cx="176" cy="114" rx="4" ry="9" transform="rotate(-5 176 114)"/>
+        <ellipse cx="168" cy="100" rx="4" ry="9" transform="rotate(-20 168 100)"/>
+      </g>
+      <path d="M84,198 Q130,178 176,198 L166,214 Q130,196 94,214 Z" fill="#ef4444" stroke="#111827" stroke-width="1.5"/>
+      <text x="130" y="202" text-anchor="middle" fill="#ffffff" font-family="Arial,sans-serif" font-weight="bold" font-size="11.5" letter-spacing="1">MAGELANG</text>
+    </svg>`;
+
+    const DEFAULT_LOGO_MAGELANG_URI = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(DEFAULT_LOGO_MAGELANG_SVG);
+    const DEFAULT_LOGO_SMP_URI = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(DEFAULT_LOGO_SMP_SVG);
+
+    function getLogoMagelangHTML(sizePx = 80) {
+      const src = appState.settings.logoKiri || DEFAULT_LOGO_MAGELANG_URI;
+      return `<img src="${src}" alt="Logo Kabupaten Magelang" style="width:${sizePx}px;height:${sizePx}px;object-fit:contain;display:inline-block;" />`;
+    }
+
+    function getLogoSmpHTML(sizePx = 84) {
+      const src = appState.settings.logoKanan || DEFAULT_LOGO_SMP_URI;
+      return `<img src="${src}" alt="Logo Sekolah" style="width:${sizePx}px;height:${sizePx}px;object-fit:contain;display:inline-block;" />`;
+    }
+
+    // =========================================================================
+    // 2. PENYIMPANAN KAPASITAS BESAR (IndexedDB + Fallback localStorage)
+    // =========================================================================
+    const STORAGE_KEY = 'sppd_smpn1_tempuran_state_v2';
+    const DB_NAME = 'SppdSmpn1TempuranDB';
+    const STORE_NAME = 'appStore';
+
+    const AppDB = {
+      open() {
+        return new Promise((resolve, reject) => {
+          if (!window.indexedDB) return reject(new Error('IndexedDB tidak didukung'));
+          const req = indexedDB.open(DB_NAME, 1);
+          req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+              db.createObjectStore(STORE_NAME);
+            }
+          };
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+      },
+      async get(key) {
+        const db = await this.open();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE_NAME, 'readonly');
+          const req = tx.objectStore(STORE_NAME).get(key);
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+      },
+      async set(key, value) {
+        const db = await this.open();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE_NAME, 'readwrite');
+          const req = tx.objectStore(STORE_NAME).put(value, key);
+          req.onsuccess = () => resolve();
+          req.onerror = () => reject(req.error);
+        });
+      }
+    };
+
+    // =========================================================================
+    // 3. STATE UTAMA APLIKASI
+    // =========================================================================
+    const DEFAULT_STATE = {
+      role: 'guru',
+      settings: {
+        pemda: 'PEMERINTAH KABUPATEN MAGELANG',
+        dinas: 'DINAS PENDIDIKAN DAN KEBUDAYAAN',
+        sekolahNama: 'SMP Negeri 1 Tempuran',
+        sekolahAlamat: 'JL. Magelang-Purworejo Km.11 Tempuran Telp.(0293)3215018',
+        sekolahKontak: 'Kode Pos 56161 Email : smpntempuransatu@yahoo.co.id',
+        adminUser: 'admin',
+        adminPass: 'tempuran1',
+        kepsekNama: 'Drs. Indro Kadaryanto',
+        kepsekPangkat: 'Pembina Tingkat I',
+        kepsekNip: '196712271998021003',
+        bendaharaNama: 'NANIK YULIYATI, S.Pd.',
+        bendaharaNip: '197607162022212009',
+        lastNomorUrut: 94,
+        kodeSurat: '192/04.55.SMP/ 2026',
+        logoKiri: DEFAULT_LOGO_MAGELANG_URI,
+        logoKanan: DEFAULT_LOGO_SMP_URI
+      },
+      masterPegawai: [
+        { id: 'peg-1', nama: 'MUKARYONO', nip: '197608312014061002', pangkat: 'Pengatur Muda Tk.1, II/ b', jabatan: 'Operator Layanan Operasional/ SMP Negeri 1 Tempuran' },
+        { id: 'peg-2', nama: 'AHMAD FAUZI, S.Pd., M.Pd.', nip: '198405122010011015', pangkat: 'Pembina, IV/ a', jabatan: 'Guru Madya / SMP Negeri 1 Tempuran' },
+        { id: 'peg-3', nama: 'NANIK YULIYATI, S.Pd.', nip: '197607162022212009', pangkat: 'Penata Muda, IX', jabatan: 'Guru / Bendahara BOSP SMP Negeri 1 Tempuran' }
+      ],
+      masterSiswa: [
+        { id: 'sis-1', nama: 'MUHAMMAD RIZKY PRATAMA', nis: '0114829104', kelas: 'Kelas VIII A' },
+        { id: 'sis-2', nama: 'AISYAH PUTRI RAMADHANI', nis: '0129384712', kelas: 'Kelas VIII B' }
+      ],
+      sppdList: [
+        {
+          id: 'sppd-sample-1',
+          status: 'approved',
+          lembarKe: '',
+          kodeNo: '',
+          nomorSurat: '94/192/04.55.SMP/ 2026',
+          kategori: 'pegawai',
+          nama: 'MUKARYONO',
+          nip: '197608312014061002',
+          pangkat: 'Pengatur Muda Tk.1, II/ b',
+          jabatan: 'Operator Layanan Operasional/ SMP Negeri 1 Tempuran',
+          tingkat: 'Tingkat D',
+          maksud: 'Laporan SPJ gaji ASN dan Pw',
+          dasar: '-',
+          kendaraan: 'Kendaraan Umum',
+          tempatBerangkat: 'SMP Negeri 1 Tempuran',
+          tempatTujuan: 'Disdikbud Kab. Magelang',
+          kotaVisum: 'Mungkid',
+          lama: '1 Hari',
+          tglBerangkat: '2026-11-13',
+          tglKembali: '2026-11-13',
+          waktuMulai: '13:00',
+          waktuSelesai: 'Selesai',
+          pengikut: [],
+          anggaranInstansi: 'SMP Negeri 1 Tempuran',
+          anggaranPasal: '-',
+          keterangan: '-',
+          tempatSurat: 'Tempuran',
+          tglSurat: '2026-11-13',
+          pengusul: 'Mukaryono'
+        },
+        {
+          id: 'sppd-sample-2',
+          status: 'pending',
+          lembarKe: '',
+          kodeNo: '',
+          nomorSurat: '',
+          kategori: 'siswa',
+          nama: 'MUHAMMAD RIZKY PRATAMA',
+          nip: 'NISN. 0114829104',
+          pangkat: 'Kelas VIII A',
+          jabatan: 'Siswa / SMP Negeri 1 Tempuran',
+          tingkat: '-',
+          maksud: 'Mengikuti Lomba Olimpiade Sains Nasional (OSN) IPA Tingkat Kabupaten Magelang',
+          dasar: 'Surat Edaran Disdikbud Kab. Magelang Tentang Pelaksanaan OSN SMP Tahun 2026',
+          kendaraan: 'Kendaraan Umum',
+          tempatBerangkat: 'SMP Negeri 1 Tempuran',
+          tempatTujuan: 'SMP Negeri 1 Mungkid',
+          kotaVisum: 'Mungkid',
+          lama: '1 Hari',
+          tglBerangkat: '2026-11-18',
+          tglKembali: '2026-11-18',
+          waktuMulai: '07:30',
+          waktuSelesai: 'Selesai',
+          pengikut: [
+            { nama: 'AISYAH PUTRI RAMADHANI', tglLahir: '14 Mei 2012', keterangan: 'Peserta OSN Matematika (VIII B)' },
+            { nama: 'AHMAD FAUZI, S.Pd., M.Pd.', tglLahir: '12 Mei 1984', keterangan: 'Guru Pendamping Lomba' }
+          ],
+          anggaranInstansi: 'SMP Negeri 1 Tempuran',
+          anggaranPasal: '-',
+          keterangan: '-',
+          tempatSurat: 'Tempuran',
+          tglSurat: '2026-11-14',
+          pengusul: 'Ahmad Fauzi, S.Pd., M.Pd.'
+        }
+      ]
+    };
+
+    let appState = JSON.parse(JSON.stringify(DEFAULT_STATE));
+    let currentPreviewId = appState.sppdList[0]?.id || null;
+    let adminAuthenticatedSession = false;
+    let currentKategoriPeserta = 'pegawai';
+    let approvingSppdId = null;
+    let deletingSppdId = null;
+
+    async function loadStateAsync() {
+      try {
+        const idbData = await AppDB.get(STORAGE_KEY);
+        if (idbData && idbData.sppdList && idbData.settings) {
+          appState = {
+            ...DEFAULT_STATE,
+            ...idbData,
+            settings: { ...DEFAULT_STATE.settings, ...(idbData.settings || {}) }
+          };
+          currentPreviewId = appState.sppdList[0]?.id || null;
+          return;
+        }
+        const rawLocal = localStorage.getItem(STORAGE_KEY);
+        if (rawLocal) {
+          const parsedLocal = JSON.parse(rawLocal);
+          if (parsedLocal && parsedLocal.sppdList && parsedLocal.settings) {
+            appState = {
+              ...DEFAULT_STATE,
+              ...parsedLocal,
+              settings: { ...DEFAULT_STATE.settings, ...(parsedLocal.settings || {}) }
+            };
+            currentPreviewId = appState.sppdList[0]?.id || null;
+            await AppDB.set(STORAGE_KEY, appState);
+            try { localStorage.removeItem(STORAGE_KEY); } catch (err) {}
+          }
+        }
+      } catch (e) {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            appState = {
+              ...DEFAULT_STATE,
+              ...parsed,
+              settings: { ...DEFAULT_STATE.settings, ...(parsed.settings || {}) }
+            };
+            currentPreviewId = appState.sppdList[0]?.id || null;
+          }
+        } catch (err) {}
+      }
+    }
+
+    async function saveState() {
+      try {
+        await AppDB.set(STORAGE_KEY, appState);
+      } catch (e) {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+        } catch (lsErr) {
+          console.error('Penyimpanan penuh:', lsErr);
+        }
+      }
+    }
+
+    // =========================================================================
+    // 4. MANAJEMEN PERAN & NAVIGASI
+    // =========================================================================
+    function isAdminAuthorized() {
+      return appState.role === 'admin' && adminAuthenticatedSession === true;
+    }
+
+    function updatePendingBadge() {
+      const badge = document.getElementById('badge-pending-count');
+      if (!badge) return;
+      const count = appState.sppdList.filter(s => s.status !== 'approved').length;
+      if (count > 0) {
+        badge.textContent = count;
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+    }
+
+    function updateRoleUI() {
+      const isAdmin = isAdminAuthorized();
+      const btnGuru = document.getElementById('btn-role-guru');
+      const btnAdmin = document.getElementById('btn-role-admin');
+      const lblBtnAdmin = document.getElementById('lbl-btn-admin');
+      const btnLogout = document.getElementById('btn-logout-admin');
+      const tabMaster = document.getElementById('tab-master');
+      const tabBackup = document.getElementById('tab-backup');
+      const banner = document.getElementById('role-banner');
+      const bannerTitle = document.getElementById('role-banner-title');
+      const bannerDesc = document.getElementById('role-banner-desc');
+      const adminDirectBox = document.getElementById('admin-nomor-direct-box');
+      const headerSchoolEl = document.getElementById('header-school-name');
+      if (headerSchoolEl) {
+        headerSchoolEl.textContent = appState.settings.sekolahNama || 'SMP Negeri 1 Tempuran';
+      }
+
+      if (isAdmin) {
+        btnAdmin.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 bg-amber-500 text-slate-950 shadow';
+        lblBtnAdmin.textContent = 'Admin TU (Aktif)';
+        btnGuru.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 text-slate-300 hover:text-white';
+        btnLogout.classList.remove('hidden');
+        tabMaster.classList.remove('hidden');
+        if (tabBackup) tabBackup.classList.remove('hidden');
+        banner.className = 'no-print mb-5 bg-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3';
+        bannerTitle.className = 'text-sm font-bold text-amber-950';
+        bannerTitle.textContent = 'Mode Admin Tata Usaha (Akses Penuh)';
+        bannerDesc.className = 'text-xs text-amber-900 mt-0.5';
+        bannerDesc.innerHTML = 'Anda login sebagai <strong>Admin TU</strong>. Anda dapat memverifikasi pengajuan guru, menerbitkan nomor surat, mengedit/menghapus SPPD, melakukan backup data, serta mengelola Master Data.';
+        if (adminDirectBox) adminDirectBox.classList.remove('hidden');
+      } else {
+        appState.role = 'guru';
+        btnGuru.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 bg-sky-600 text-white shadow';
+        btnAdmin.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 text-slate-300 hover:text-white';
+        lblBtnAdmin.textContent = 'Login Admin TU';
+        btnLogout.classList.add('hidden');
+        tabMaster.classList.add('hidden');
+        if (tabBackup) tabBackup.classList.add('hidden');
+        banner.className = 'no-print mb-5 bg-sky-50 border border-sky-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3';
+        bannerTitle.className = 'text-sm font-bold text-sky-950';
+        bannerTitle.textContent = 'Mode Guru / Pengusul SPPD';
+        bannerDesc.className = 'text-xs text-sky-800 mt-0.5';
+        bannerDesc.innerHTML = 'Guru hanya dapat membuat pengajuan SPPD baru dan mencetak dokumen <strong>setelah disetujui & diberi nomor oleh Admin TU</strong>. Pengeditan dan persetujuan dikunci khusus untuk Akun Admin.';
+        if (adminDirectBox) adminDirectBox.classList.add('hidden');
+      }
+
+      updatePendingBadge();
+      renderSppdList();
+      if (currentPreviewId) loadPreviewById(currentPreviewId);
+    }
+
+    function switchRole(targetRole) {
+      if (targetRole === 'guru') {
+        appState.role = 'guru';
+        adminAuthenticatedSession = false;
+        updateRoleUI();
+        const activeMaster = !document.getElementById('section-master').classList.contains('hidden');
+        if (activeMaster) switchTab('daftar');
+        showToast('Beralih ke Mode Guru / Pengusul.');
+      } else {
+        requestAdminAccess();
+      }
+    }
+
+    function requestAdminAccess() {
+      if (isAdminAuthorized()) return;
+      document.getElementById('login-admin-user').value = '';
+      document.getElementById('login-admin-pass').value = '';
+      const modal = document.getElementById('modal-admin-login');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      setTimeout(() => document.getElementById('login-admin-user').focus(), 100);
+    }
+
+    function closeAdminLoginModal() {
+      const modal = document.getElementById('modal-admin-login');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function handleAdminLogin(e) {
+      e.preventDefault();
+      const u = document.getElementById('login-admin-user').value.trim();
+      const p = document.getElementById('login-admin-pass').value;
+      const validU = appState.settings.adminUser || 'admin';
+      const validP = appState.settings.adminPass || 'tempuran1';
+
+      if (u === validU && p === validP) {
+        adminAuthenticatedSession = true;
+        appState.role = 'admin';
+        closeAdminLoginModal();
+        updateRoleUI();
+        showToast('Berhasil masuk sebagai Admin TU!');
+      } else {
+        showToast('Username atau Password Admin salah!', 'error');
+      }
+    }
+
+    function logoutAdmin() {
+      adminAuthenticatedSession = false;
+      appState.role = 'guru';
+      updateRoleUI();
+      if (!document.getElementById('section-master').classList.contains('hidden')) {
+        switchTab('daftar');
+      }
+      showToast('Anda telah keluar dari Akun Admin TU.');
+    }
+
+    function switchTab(tabName) {
+      if (tabName === 'master' && !isAdminAuthorized()) {
+        showToast('Akses ditolak! Menu Master Data hanya untuk Admin TU.', 'error');
+        return;
+      }
+
+      const sections = ['daftar', 'buat', 'pratinjau', 'rekap', 'master'];
+      sections.forEach(sec => {
+        const el = document.getElementById(`section-${sec}`);
+        if (el) el.classList.toggle('hidden', sec !== tabName);
+      });
+
+      document.querySelectorAll('.nav-tab').forEach(btn => {
+        btn.classList.remove('bg-slate-700', 'text-white');
+        btn.classList.add('text-slate-300');
+      });
+      const activeBtn = document.getElementById(`tab-${tabName}`);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-slate-700', 'text-white');
+        activeBtn.classList.remove('text-slate-300');
+      }
+
+      if (tabName === 'daftar') {
+        renderSppdList();
+      } else if (tabName === 'buat') {
+        if (!document.getElementById('edit-sppd-id').value) {
+          resetFormToNew();
+        }
+      } else if (tabName === 'pratinjau') {
+        populatePreviewSelector();
+        if (currentPreviewId) loadPreviewById(currentPreviewId);
+      } else if (tabName === 'rekap') {
+        initRekapFilters();
+        renderRekapPerjalanan();
+      } else if (tabName === 'master') {
+        renderMasterSettings();
+      }
+    }
+
+    function openBackupModal() {
+      if (!isAdminAuthorized()) {
+        showToast('Akses ditolak! Menu Backup & Restore Data hanya diizinkan untuk Admin TU.', 'error');
+        return;
+      }
+      const modal = document.getElementById('modal-backup');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeBackupModal() {
+      const modal = document.getElementById('modal-backup');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    // =========================================================================
+    // 5. FORM PENGAJUAN & PERHITUNGAN OTOMATIS
+    // =========================================================================
+    function togglePasalLainnya() {
+      const sel = document.getElementById('inp-anggaran-pasal-select');
+      const custom = document.getElementById('inp-anggaran-pasal-custom');
+      if (sel.value === 'Lainnya') {
+        custom.classList.remove('hidden');
+        custom.focus();
+      } else {
+        custom.classList.add('hidden');
+      }
+    }
+
+    function setPasalAnggaranValue(val) {
+      const sel = document.getElementById('inp-anggaran-pasal-select');
+      const custom = document.getElementById('inp-anggaran-pasal-custom');
+      const v = (val || '-').trim();
+      if (v === '-' || v === 'Dana BOSP' || v === 'DAK') {
+        sel.value = v;
+        custom.value = '';
+        custom.classList.add('hidden');
+      } else {
+        sel.value = 'Lainnya';
+        custom.value = v;
+        custom.classList.remove('hidden');
+      }
+    }
+
+    function getPasalAnggaranValue() {
+      const sel = document.getElementById('inp-anggaran-pasal-select');
+      if (sel.value === 'Lainnya') {
+        return document.getElementById('inp-anggaran-pasal-custom').value.trim() || '-';
+      }
+      return sel.value || '-';
+    }
+
+    function setKategoriPeserta(kat) {
+      currentKategoriPeserta = kat;
+      const btnPeg = document.getElementById('btn-kat-pegawai');
+      const btnSis = document.getElementById('btn-kat-siswa');
+      const lblNama = document.getElementById('lbl-nama');
+      const lblNip = document.getElementById('lbl-nip');
+      const lblPangkat = document.getElementById('lbl-pangkat');
+      const lblJabatan = document.getElementById('lbl-jabatan');
+
+      if (kat === 'siswa') {
+        btnSis.className = 'px-4 py-2 rounded-lg text-xs font-bold transition bg-emerald-600 text-white';
+        btnPeg.className = 'px-4 py-2 rounded-lg text-xs font-bold transition text-slate-600 hover:text-slate-900';
+        lblNama.textContent = 'Nama Lengkap Siswa *';
+        lblNip.textContent = 'NIS / NISN Siswa';
+        lblPangkat.textContent = 'Kelas';
+        lblJabatan.textContent = 'Status / Asal Sekolah';
+        if (!document.getElementById('edit-sppd-id').value) {
+          document.getElementById('inp-jabatan').value = `Siswa / ${appState.settings.sekolahNama || 'SMP Negeri 1 Tempuran'}`;
+          document.getElementById('inp-tingkat').value = '-';
+        }
+      } else {
+        btnPeg.className = 'px-4 py-2 rounded-lg text-xs font-bold transition bg-sky-600 text-white';
+        btnSis.className = 'px-4 py-2 rounded-lg text-xs font-bold transition text-slate-600 hover:text-slate-900';
+        lblNama.textContent = 'Nama Pegawai / Guru *';
+        lblNip.textContent = 'NIP / NIPPPK';
+        lblPangkat.textContent = 'Pangkat / Golongan';
+        lblJabatan.textContent = 'Jabatan / Instansi *';
+        if (!document.getElementById('edit-sppd-id').value) {
+          document.getElementById('inp-tingkat').value = 'Tingkat D';
+        }
+      }
+      populateMasterPersonDropdown();
+    }
+
+    function populateMasterPersonDropdown() {
+      const sel = document.getElementById('select-master-person');
+      if (!sel) return;
+      if (currentKategoriPeserta === 'siswa') {
+        sel.innerHTML = `<option value="">-- Pilih Cepat Data Siswa --</option>` +
+          appState.masterSiswa.map(s => `<option value="${s.id}">${escapeHtml(s.nama)} (${escapeHtml(s.kelas)})</option>`).join('');
+      } else {
+        sel.innerHTML = `<option value="">-- Pilih Cepat Data Guru / Staf --</option>` +
+          appState.masterPegawai.map(p => `<option value="${p.id}">${escapeHtml(p.nama)}</option>`).join('');
+      }
+    }
+
+    function fillFromMasterPerson() {
+      const val = document.getElementById('select-master-person').value;
+      if (!val) return;
+      if (currentKategoriPeserta === 'siswa') {
+        const s = appState.masterSiswa.find(x => x.id === val);
+        if (s) {
+          document.getElementById('inp-nama').value = s.nama;
+          document.getElementById('inp-nip').value = s.nis ? `NISN. ${s.nis}` : '-';
+          document.getElementById('inp-pangkat').value = s.kelas;
+          document.getElementById('inp-jabatan').value = `Siswa / ${appState.settings.sekolahNama || 'SMP Negeri 1 Tempuran'}`;
+        }
+      } else {
+        const p = appState.masterPegawai.find(x => x.id === val);
+        if (p) {
+          document.getElementById('inp-nama').value = p.nama;
+          document.getElementById('inp-nip').value = p.nip || '-';
+          document.getElementById('inp-pangkat').value = p.pangkat || '-';
+          document.getElementById('inp-jabatan').value = p.jabatan || '';
+          if (!document.getElementById('inp-pengusul').value) {
+            document.getElementById('inp-pengusul').value = p.nama;
+          }
+        }
+      }
+    }
+
+    function syncTanggalKembali() {
+      const tglBerangkat = document.getElementById('inp-tgl-berangkat').value;
+      const tglKembaliEl = document.getElementById('inp-tgl-kembali');
+      if (tglBerangkat && (!tglKembaliEl.value || tglKembaliEl.value < tglBerangkat)) {
+        tglKembaliEl.value = tglBerangkat;
+      }
+      hitungLamaPerjalanan();
+    }
+
+    function hitungLamaPerjalanan() {
+      const startVal = document.getElementById('inp-tgl-berangkat').value;
+      const endVal = document.getElementById('inp-tgl-kembali').value;
+      const lamaEl = document.getElementById('inp-lama');
+      if (!startVal || !endVal || !lamaEl) return;
+
+      const start = new Date(startVal + 'T00:00:00');
+      const end = new Date(endVal + 'T00:00:00');
+      if (end < start) {
+        document.getElementById('inp-tgl-kembali').value = startVal;
+        lamaEl.value = '1 Hari';
+        return;
+      }
+      const diffDays = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
+      lamaEl.value = `${diffDays} Hari`;
+    }
+
+    function addPengikutRow(nama = '', tglLahir = '', keterangan = '') {
+      const container = document.getElementById('pengikut-list-container');
+      const row = document.createElement('div');
+      row.className = 'pengikut-row grid grid-cols-1 sm:grid-cols-12 gap-2 items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200';
+      row.innerHTML = `
+        <input type="text" placeholder="Nama Pengikut (Guru / Siswa)" value="${escapeHtml(nama)}" class="pk-nama sm:col-span-5 px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs bg-white" />
+        <input type="text" placeholder="Tgl Lahir (Misal: 14 Mei 2012)" value="${escapeHtml(tglLahir)}" class="pk-lahir sm:col-span-3 px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs bg-white" />
+        <input type="text" placeholder="Keterangan (Misal: Peserta / Pendamping)" value="${escapeHtml(keterangan)}" class="pk-ket sm:col-span-3 px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs bg-white" />
+        <button type="button" onclick="this.parentElement.remove()" class="sm:col-span-1 py-1.5 text-rose-600 hover:bg-rose-50 rounded-lg text-xs font-bold" title="Hapus baris">✕</button>
+      `;
+      container.appendChild(row);
+    }
+
+    function resetFormToNew() {
+      document.getElementById('sppd-form').reset();
+      document.getElementById('edit-sppd-id').value = '';
+      document.getElementById('form-title').textContent = 'Formulir Pengajuan SPPD & SPT Baru';
+      document.getElementById('pengikut-list-container').innerHTML = '';
+
+      const schoolName = appState.settings.sekolahNama || 'SMP Negeri 1 Tempuran';
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('inp-tgl-berangkat').value = today;
+      document.getElementById('inp-tgl-kembali').value = today;
+      document.getElementById('inp-tgl-surat').value = today;
+      document.getElementById('inp-berangkat').value = schoolName;
+      document.getElementById('inp-kota-visum').value = 'Mungkid';
+      document.getElementById('inp-kendaraan').value = 'Kendaraan Umum';
+      document.getElementById('inp-lama').value = '1 Hari';
+      document.getElementById('inp-waktu-mulai').value = '08:00';
+      document.getElementById('inp-waktu-selesai').value = 'Selesai';
+      document.getElementById('inp-dasar').value = '-';
+      document.getElementById('inp-anggaran-instansi').value = schoolName;
+      setPasalAnggaranValue('-');
+      document.getElementById('inp-keterangan').value = '-';
+      document.getElementById('inp-tempat-surat').value = 'Tempuran';
+
+      setKategoriPeserta('pegawai');
+    }
+
+    function handleFormSubmit(e) {
+      e.preventDefault();
+      const editId = document.getElementById('edit-sppd-id').value;
+      if (editId && !isAdminAuthorized()) {
+        showToast('Akses ditolak! Hanya Akun Admin TU yang dapat mengedit SPPD.', 'error');
+        return;
+      }
+
+      const pengikut = [];
+      document.querySelectorAll('#pengikut-list-container .pengikut-row').forEach(row => {
+        const nama = row.querySelector('.pk-nama').value.trim();
+        const tglLahir = row.querySelector('.pk-lahir').value.trim();
+        const keterangan = row.querySelector('.pk-ket').value.trim();
+        if (nama) pengikut.push({ nama, tglLahir, keterangan });
+      });
+
+      const isAdmin = isAdminAuthorized();
+      const nomorAdminInput = document.getElementById('inp-nomor-admin').value.trim();
+      const existingItem = editId ? appState.sppdList.find(s => s.id === editId) : null;
+
+      let status = existingItem ? existingItem.status : 'pending';
+      let nomorSurat = existingItem ? existingItem.nomorSurat : '';
+
+      if (isAdmin && nomorAdminInput) {
+        status = 'approved';
+        nomorSurat = nomorAdminInput;
+      }
+
+      const payload = {
+        id: editId || `sppd-${Date.now()}`,
+        status,
+        lembarKe: existingItem ? existingItem.lembarKe : '',
+        kodeNo: existingItem ? existingItem.kodeNo : '',
+        nomorSurat,
+        kategori: currentKategoriPeserta,
+        nama: document.getElementById('inp-nama').value.trim(),
+        nip: document.getElementById('inp-nip').value.trim() || '-',
+        pangkat: document.getElementById('inp-pangkat').value.trim() || '-',
+        jabatan: document.getElementById('inp-jabatan').value.trim(),
+        tingkat: document.getElementById('inp-tingkat').value,
+        maksud: document.getElementById('inp-maksud').value.trim(),
+        dasar: document.getElementById('inp-dasar').value.trim() || '-',
+        kendaraan: document.getElementById('inp-kendaraan').value.trim(),
+        tempatBerangkat: document.getElementById('inp-berangkat').value.trim(),
+        tempatTujuan: document.getElementById('inp-tujuan').value.trim(),
+        kotaVisum: document.getElementById('inp-kota-visum').value.trim() || 'Mungkid',
+        lama: document.getElementById('inp-lama').value.trim(),
+        tglBerangkat: document.getElementById('inp-tgl-berangkat').value,
+        tglKembali: document.getElementById('inp-tgl-kembali').value,
+        waktuMulai: document.getElementById('inp-waktu-mulai').value.trim(),
+        waktuSelesai: document.getElementById('inp-waktu-selesai').value.trim(),
+        pengikut,
+        anggaranInstansi: document.getElementById('inp-anggaran-instansi').value.trim(),
+        anggaranPasal: getPasalAnggaranValue(),
+        keterangan: document.getElementById('inp-keterangan').value.trim() || '-',
+        tempatSurat: document.getElementById('inp-tempat-surat').value.trim() || 'Tempuran',
+        tglSurat: document.getElementById('inp-tgl-surat').value,
+        pengusul: document.getElementById('inp-pengusul').value.trim()
+      };
+
+      if (editId) {
+        const idx = appState.sppdList.findIndex(s => s.id === editId);
+        if (idx !== -1) appState.sppdList[idx] = payload;
+        showToast('Perubahan data SPPD berhasil disimpan!');
+      } else {
+        appState.sppdList.unshift(payload);
+        showToast(isAdmin && nomorSurat
+          ? 'SPPD baru berhasil dibuat dan diterbitkan!'
+          : 'Pengajuan SPPD berhasil dikirim! Menunggu persetujuan & nomor Admin TU.');
+      }
+
+      document.getElementById('edit-sppd-id').value = '';
+      currentPreviewId = payload.id;
+      saveState();
+      updatePendingBadge();
+      openPreview(payload.id);
+    }
+
+    function editSppd(id) {
+      if (!isAdminAuthorized()) {
+        showToast('Akses ditolak! Hanya Akun Admin TU yang dapat mengedit SPPD.', 'error');
+        return;
+      }
+      const item = appState.sppdList.find(s => s.id === id);
+      if (!item) return;
+
+      document.getElementById('edit-sppd-id').value = item.id;
+      document.getElementById('form-title').textContent = `Edit Dokumen SPPD: ${item.nama}`;
+      setKategoriPeserta(item.kategori || 'pegawai');
+
+      document.getElementById('inp-pengusul').value = item.pengusul || '';
+      document.getElementById('inp-nama').value = item.nama || '';
+      document.getElementById('inp-nip').value = item.nip || '';
+      document.getElementById('inp-pangkat').value = item.pangkat || '';
+      document.getElementById('inp-jabatan').value = item.jabatan || '';
+      document.getElementById('inp-tingkat').value = item.tingkat || 'Tingkat D';
+      document.getElementById('inp-kendaraan').value = item.kendaraan || 'Kendaraan Umum';
+      document.getElementById('inp-maksud').value = item.maksud || '';
+      document.getElementById('inp-dasar').value = item.dasar || '-';
+      document.getElementById('inp-berangkat').value = item.tempatBerangkat || '';
+      document.getElementById('inp-tujuan').value = item.tempatTujuan || '';
+      document.getElementById('inp-kota-visum').value = item.kotaVisum || 'Mungkid';
+      document.getElementById('inp-lama').value = item.lama || '1 Hari';
+      document.getElementById('inp-tgl-berangkat').value = item.tglBerangkat || '';
+      document.getElementById('inp-tgl-kembali').value = item.tglKembali || '';
+      document.getElementById('inp-waktu-mulai').value = item.waktuMulai || '08:00';
+      document.getElementById('inp-waktu-selesai').value = item.waktuSelesai || 'Selesai';
+      document.getElementById('inp-anggaran-instansi').value = item.anggaranInstansi || '';
+      setPasalAnggaranValue(item.anggaranPasal || '-');
+      document.getElementById('inp-keterangan').value = item.keterangan || '-';
+      document.getElementById('inp-tempat-surat').value = item.tempatSurat || 'Tempuran';
+      document.getElementById('inp-tgl-surat').value = item.tglSurat || '';
+      document.getElementById('inp-nomor-admin').value = item.nomorSurat || '';
+
+      const pkContainer = document.getElementById('pengikut-list-container');
+      pkContainer.innerHTML = '';
+      (item.pengikut || []).forEach(pk => addPengikutRow(pk.nama, pk.tglLahir, pk.keterangan));
+
+      switchTab('buat');
+    }
+
+    // =========================================================================
+    // 6. DAFTAR SPPD & PERSETUJUAN ADMIN
+    // =========================================================================
+    function renderSppdList() {
+      const tbody = document.getElementById('sppd-table-body');
+      if (!tbody) return;
+      const filterKat = document.getElementById('filter-kategori')?.value || 'all';
+      const filterStat = document.getElementById('filter-status')?.value || 'all';
+      const isAdmin = isAdminAuthorized();
+
+      const filtered = appState.sppdList.filter(item => {
+        if (filterKat !== 'all' && item.kategori !== filterKat) return false;
+        if (filterStat !== 'all' && item.status !== filterStat) return false;
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400 text-xs">Tidak ada data pengajuan SPPD yang sesuai filter.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(item => {
+        const isApproved = item.status === 'approved';
+        const katBadge = item.kategori === 'siswa'
+          ? '<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800">Siswa</span>'
+          : '<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-sky-100 text-sky-800">Guru / Staf</span>';
+        const statBadge = isApproved
+          ? '<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800">✓ Disetujui</span>'
+          : '<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800">⏳ Menunggu Admin</span>';
+
+        return `
+          <tr class="hover:bg-slate-50/80 transition">
+            <td class="py-3 px-3 font-mono text-xs font-semibold ${isApproved ? 'text-slate-900' : 'text-amber-700'}">
+              ${isApproved ? escapeHtml(item.nomorSurat) : '[Menunggu Nomor]'}
+            </td>
+            <td class="py-3 px-3">${katBadge}</td>
+            <td class="py-3 px-3">
+              <div class="font-bold text-slate-800">${escapeHtml(item.nama)}</div>
+              <div class="text-[11px] text-slate-500">Pengusul: ${escapeHtml(item.pengusul || '-')}</div>
+            </td>
+            <td class="py-3 px-3">
+              <div class="text-slate-800 line-clamp-1">${escapeHtml(item.maksud)}</div>
+              <div class="text-[11px] text-slate-500">Tujuan: ${escapeHtml(item.tempatTujuan)}</div>
+            </td>
+            <td class="py-3 px-3 whitespace-nowrap text-xs text-slate-600">
+              ${formatTanggalIndo(item.tglBerangkat)}
+              <div class="text-[11px] text-slate-400">(${escapeHtml(item.lama)})</div>
+            </td>
+            <td class="py-3 px-3 whitespace-nowrap">${statBadge}</td>
+            <td class="py-3 px-3 text-right whitespace-nowrap space-x-1">
+              ${isAdmin ? `
+                <button onclick="openApproveModal('${item.id}')" class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white">
+                  ${isApproved ? 'No. Surat' : '✓ Setujui'}
+                </button>
+              ` : ''}
+              <button onclick="openPreview('${item.id}')" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold ${isApproved || isAdmin ? 'bg-sky-600 hover:bg-sky-700 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}">
+                ${isApproved ? 'Pratinjau & Cetak' : 'Lihat'}
+              </button>
+              ${isAdmin ? `
+                <button onclick="editSppd('${item.id}')" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700">Edit</button>
+                <button onclick="openDeleteModal('${item.id}')" class="px-2.5 py-1.5 rounded-lg text-xs font-bold text-rose-600 hover:bg-rose-50" title="Hapus">✕</button>
+              ` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function openApproveModal(id) {
+      if (!isAdminAuthorized()) {
+        showToast('Akses ditolak! Hanya Akun Admin TU yang dapat menyetujui SPPD.', 'error');
+        return;
+      }
+      const item = appState.sppdList.find(s => s.id === id);
+      if (!item) return;
+      approvingSppdId = id;
+      document.getElementById('approve-nama').textContent = `${item.nama} (${item.kategori === 'siswa' ? 'Siswa' : 'Guru/Staf'})`;
+      document.getElementById('approve-maksud').textContent = `${item.maksud} — Tujuan: ${item.tempatTujuan}`;
+      document.getElementById('approve-lembar').value = item.lembarKe || '';
+      document.getElementById('approve-kode').value = item.kodeNo || '';
+      if (item.nomorSurat) {
+        document.getElementById('approve-nomor').value = item.nomorSurat;
+      } else {
+        generateNextNomorInput();
+      }
+      const modal = document.getElementById('modal-approve');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function openApproveModalFromPreview() {
+      if (currentPreviewId) openApproveModal(currentPreviewId);
+    }
+
+    function closeApproveModal() {
+      approvingSppdId = null;
+      const modal = document.getElementById('modal-approve');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function generateNextNomorInput() {
+      const nextNum = (parseInt(appState.settings.lastNomorUrut, 10) || 94) + 1;
+      const kode = appState.settings.kodeSurat || '192/04.55.SMP/ 2026';
+      document.getElementById('approve-nomor').value = `${nextNum}/${kode}`;
+    }
+
+    function confirmApproveSppd() {
+      if (!isAdminAuthorized() || !approvingSppdId) return;
+      const nomor = document.getElementById('approve-nomor').value.trim();
+      if (!nomor) {
+        showToast('Nomor surat wajib diisi!', 'error');
+        return;
+      }
+      const item = appState.sppdList.find(s => s.id === approvingSppdId);
+      if (item) {
+        item.status = 'approved';
+        item.lembarKe = document.getElementById('approve-lembar').value.trim();
+        item.kodeNo = document.getElementById('approve-kode').value.trim();
+        item.nomorSurat = nomor;
+
+        const matchUrut = nomor.match(/^(\d+)\//);
+        if (matchUrut) {
+          const parsedUrut = parseInt(matchUrut[1], 10);
+          if (parsedUrut > (parseInt(appState.settings.lastNomorUrut, 10) || 0)) {
+            appState.settings.lastNomorUrut = parsedUrut;
+          }
+        }
+      }
+      saveState();
+      closeApproveModal();
+      updatePendingBadge();
+      renderSppdList();
+      if (currentPreviewId === approvingSppdId) loadPreviewById(currentPreviewId);
+      showToast(`SPPD disetujui dengan Nomor Surat: ${nomor}`);
+    }
+
+    function openDeleteModal(id) {
+      if (!isAdminAuthorized()) return;
+      deletingSppdId = id;
+      const modal = document.getElementById('modal-delete');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeDeleteModal() {
+      deletingSppdId = null;
+      const modal = document.getElementById('modal-delete');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function confirmDeleteSppd() {
+      if (!isAdminAuthorized() || !deletingSppdId) return;
+      appState.sppdList = appState.sppdList.filter(s => s.id !== deletingSppdId);
+      if (currentPreviewId === deletingSppdId) {
+        currentPreviewId = appState.sppdList[0]?.id || null;
+      }
+      saveState();
+      closeDeleteModal();
+      updatePendingBadge();
+      renderSppdList();
+      showToast('Dokumen SPPD berhasil dihapus.');
+    }
+
+    // =========================================================================
+    // 7. RENDER KOP SURAT & DOKUMEN CETAK (SPPD DEPAN, BELAKANG, SPT)
+    // =========================================================================
+    function buildKopSuratHTML() {
+      const pemda = escapeHtml(appState.settings.pemda || 'PEMERINTAH KABUPATEN MAGELANG');
+      const dinas = escapeHtml(appState.settings.dinas || 'DINAS PENDIDIKAN DAN KEBUDAYAAN');
+      const sekolahUpper = escapeHtml((appState.settings.sekolahNama || 'SMP Negeri 1 Tempuran').toUpperCase());
+      const alamat = escapeHtml(appState.settings.sekolahAlamat || 'JL. Magelang-Purworejo Km.11 Tempuran Telp.(0293)3215018');
+      const kontak = escapeHtml(appState.settings.sekolahKontak || 'Kode Pos 56161 Email : smpntempuransatu@yahoo.co.id');
+
+      return `
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 2px;">
+          <tr>
+            <td style="width: 78px; text-align: left; vertical-align: middle; padding: 0;">
+              ${getLogoMagelangHTML(80)}
+            </td>
+            <td style="text-align: center; vertical-align: middle; padding: 0 4px;">
+              <div style="font-size: 13pt; font-weight: normal; letter-spacing: 0.2px; line-height: 1.15;">
+                ${pemda}
+              </div>
+              <div style="font-size: 12.5pt; font-weight: normal; letter-spacing: 0.2px; line-height: 1.18;">
+                ${dinas}
+              </div>
+              <div style="font-size: 16.5pt; font-weight: bold; letter-spacing: 0.3px; line-height: 1.22; margin-top: 1px;">
+                ${sekolahUpper}
+              </div>
+              <div style="font-size: 8.5pt; line-height: 1.25; margin-top: 2px;">
+                ${alamat}
+              </div>
+              <div style="font-size: 8.5pt; line-height: 1.25;">
+                ${kontak}
+              </div>
+            </td>
+            <td style="width: 82px; text-align: right; vertical-align: middle; padding: 0;">
+              ${getLogoSmpHTML(84)}
+            </td>
+          </tr>
+        </table>
+        <div class="kop-divider"></div>
+      `;
+    }
+
+    function renderAllKops() {
+      const kopHtml = buildKopSuratHTML();
+      document.getElementById('kop-sppd-depan').innerHTML = kopHtml;
+      document.getElementById('kop-spt').innerHTML = kopHtml;
+    }
+
+    function populatePreviewSelector() {
+      const sel = document.getElementById('select-preview-sppd');
+      sel.innerHTML = appState.sppdList.map(item => {
+        const nom = item.nomorSurat ? item.nomorSurat : '[Menunggu Nomor]';
+        const tag = item.kategori === 'siswa' ? 'Siswa' : 'Guru/Staf';
+        return `<option value="${item.id}">${escapeHtml(nom)} — ${escapeHtml(item.nama)} (${tag})</option>`;
+      }).join('');
+      if (currentPreviewId) {
+        sel.value = currentPreviewId;
+      }
+    }
+
+    function openPreview(id) {
+      currentPreviewId = id;
+      switchTab('pratinjau');
+    }
+
+    function editCurrentPreview() {
+      if (!isAdminAuthorized()) {
+        showToast('Akses ditolak! Hanya Akun Admin TU yang dapat mengedit SPPD.', 'error');
+        return;
+      }
+      if (currentPreviewId) {
+        editSppd(currentPreviewId);
+      }
+    }
+
+    function handlePrintDocument() {
+      const item = appState.sppdList.find(s => s.id === currentPreviewId);
+      if (!item) return;
+      if (!isAdminAuthorized() && item.status !== 'approved') {
+        showToast('Dokumen belum disetujui Admin TU! Tunggu hingga nomor surat diterbitkan.', 'error');
+        return;
+      }
+
+      loadPreviewById(item.id);
+      const wrapperHtml = document.getElementById('preview-wrapper').innerHTML;
+      const printWin = window.open('', '_blank', 'width=900,height=1100');
+      if (printWin) {
+        printWin.document.open();
+        printWin.document.write(`
+          <!DOCTYPE html>
+          <html lang="id">
+          <head>
+            <meta charset="UTF-8" />
+            <title>Cetak SPPD & SPT - ${escapeHtml(item.nama)}</title>
+            <style>
+              @page { size: A4 portrait; margin: 8mm 10mm 8mm 10mm; }
+              body {
+                font-family: Arial, Helvetica, sans-serif;
+                color: #000000;
+                background: #ffffff;
+                margin: 0;
+                padding: 0;
+              }
+              .doc-sheet {
+                font-family: Arial, Helvetica, sans-serif;
+                color: #000000;
+                background: #ffffff;
+                width: 100%;
+                padding: 2mm 4mm;
+                box-sizing: border-box;
+                font-size: 10pt;
+                line-height: 1.25;
+                page-break-after: always;
+                break-after: page;
+              }
+              .doc-sheet:last-child {
+                page-break-after: auto;
+                break-after: auto;
+              }
+              .doc-table, .doc-table-visum {
+                width: 100%;
+                border-collapse: collapse;
+                border: 1.5px solid #000000;
+              }
+              .doc-table td, .doc-table th {
+                border: 1px solid #000000;
+                padding: 4px 6px;
+                vertical-align: top;
+                font-size: 9.8pt;
+              }
+              .doc-table-visum td {
+                border: 1px solid #000000;
+                padding: 4px 6px;
+                vertical-align: top;
+                font-size: 9.6pt;
+              }
+              .kop-divider {
+                border-top: 2px solid #000000;
+                border-bottom: 0.75px solid #000000;
+                height: 2px;
+                margin-top: 4px;
+                margin-bottom: 10px;
+              }
+            </style>
+          </head>
+          <body>
+            ${wrapperHtml}
+            <script>
+              window.onload = function() {
+                setTimeout(function() {
+                  window.focus();
+                  window.print();
+                }, 250);
+              };
+            <\/script>
+          </body>
+          </html>
+        `);
+        printWin.document.close();
+      } else {
+        window.print();
+      }
+    }
+
+    function loadPreviewById(id) {
+      const item = appState.sppdList.find(s => s.id === id);
+      if (!item) return;
+      currentPreviewId = id;
+
+      const sel = document.getElementById('select-preview-sppd');
+      if (sel && sel.value !== id) sel.value = id;
+
+      renderAllKops();
+
+      const badge = document.getElementById('preview-status-badge');
+      const btnApprove = document.getElementById('btn-preview-approve');
+      const btnEditPreview = document.getElementById('btn-preview-edit');
+      const btnPrintPreview = document.getElementById('btn-preview-print');
+      const guruLockNotice = document.getElementById('guru-print-lock-notice');
+      const isApproved = item.status === 'approved';
+      const isAdmin = isAdminAuthorized();
+
+      if (isApproved) {
+        badge.className = 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800';
+        badge.textContent = `✓ Disetujui (${item.nomorSurat})`;
+      } else {
+        badge.className = 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800';
+        badge.textContent = '⏳ Menunggu Persetujuan & Nomor Admin TU';
+      }
+
+      if (isAdmin) {
+        btnApprove.classList.remove('hidden');
+        btnApprove.textContent = isApproved ? '✎ Ubah Nomor Surat' : '✓ Setujui & Beri Nomor Surat';
+        btnEditPreview.classList.remove('hidden');
+        btnPrintPreview.classList.remove('hidden');
+        btnPrintPreview.disabled = false;
+        btnPrintPreview.className = 'px-5 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl shadow flex items-center gap-2 transition';
+        guruLockNotice.classList.add('hidden');
+      } else {
+        btnApprove.classList.add('hidden');
+        btnEditPreview.classList.add('hidden');
+        if (isApproved) {
+          btnPrintPreview.classList.remove('hidden');
+          btnPrintPreview.disabled = false;
+          btnPrintPreview.className = 'px-5 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl shadow flex items-center gap-2 transition';
+          guruLockNotice.classList.add('hidden');
+        } else {
+          btnPrintPreview.classList.add('hidden');
+          guruLockNotice.classList.remove('hidden');
+        }
+      }
+
+      const nomorText = isApproved && item.nomorSurat ? item.nomorSurat : '[Menunggu Nomor Admin]';
+      const isSiswa = item.kategori === 'siswa';
+
+      // --- HALAMAN 1: SPPD DEPAN ---
+      document.getElementById('doc-lembar-ke').textContent = item.lembarKe || '';
+      document.getElementById('doc-kode-no').textContent = item.kodeNo || '';
+      document.getElementById('doc-nomor-sppd').textContent = nomorText;
+
+      document.getElementById('doc-nama-pegawai').textContent = item.nama;
+      document.getElementById('doc-nip-pegawai').textContent = item.nip || '-';
+      document.getElementById('doc-pangkat').textContent = item.pangkat || '-';
+      document.getElementById('doc-jabatan').textContent = item.jabatan || '-';
+      document.getElementById('doc-tingkat').textContent = item.tingkat || 'Tingkat D';
+      document.getElementById('doc-maksud').textContent = item.maksud;
+      document.getElementById('doc-kendaraan').textContent = item.kendaraan || 'Kendaraan Umum';
+      document.getElementById('doc-berangkat').textContent = item.tempatBerangkat || 'SMP Negeri 1 Tempuran';
+      document.getElementById('doc-tujuan').textContent = item.tempatTujuan;
+      document.getElementById('doc-lama').textContent = item.lama;
+      document.getElementById('doc-tgl-berangkat').textContent = formatTanggalIndo(item.tglBerangkat);
+      document.getElementById('doc-tgl-kembali').textContent = formatTanggalIndo(item.tglKembali);
+
+      const pkTbody = document.getElementById('doc-pengikut-tbody');
+      const pkList = item.pengikut || [];
+      const minRows = Math.max(2, pkList.length);
+      let pkHtml = '';
+      for (let i = 0; i < minRows; i++) {
+        const pk = pkList[i];
+        const noLabel = i === 0 ? '1' : `${i + 1}.`;
+        if (pk) {
+          pkHtml += `
+            <tr>
+              <td></td>
+              <td style="padding-left: 26px;">${noLabel} &nbsp;${escapeHtml(pk.nama)}</td>
+              <td>
+                <div style="display: flex; justify-content: space-between; padding-right: 12px;">
+                  <span>${escapeHtml(pk.tglLahir || '')}</span>
+                  <span>${escapeHtml(pk.keterangan || '')}</span>
+                </div>
+              </td>
+            </tr>
+          `;
+        } else {
+          pkHtml += `
+            <tr>
+              <td></td>
+              <td style="padding-left: 26px;">${noLabel}</td>
+              <td></td>
+            </tr>
+          `;
+        }
+      }
+      pkTbody.innerHTML = pkHtml;
+
+      document.getElementById('doc-anggaran-instansi').textContent = item.anggaranInstansi || 'SMP Negeri 1 Tempuran';
+      document.getElementById('doc-anggaran-pasal').textContent = item.anggaranPasal || '-';
+      document.getElementById('doc-keterangan').textContent = item.keterangan || '-';
+      document.getElementById('doc-tempat-surat').textContent = item.tempatSurat || 'Tempuran';
+      document.getElementById('doc-tgl-surat').textContent = formatTanggalIndo(item.tglSurat);
+
+      document.getElementById('doc-kepsek-nama').textContent = appState.settings.kepsekNama;
+      document.getElementById('doc-kepsek-pangkat').textContent = appState.settings.kepsekPangkat;
+      document.getElementById('doc-kepsek-nip').textContent = `NIP. ${appState.settings.kepsekNip}`;
+
+      // --- HALAMAN 2: SPPD BELAKANG (VISUM) ---
+      document.getElementById('visum-berangkat-dari').textContent = item.tempatSurat || 'Tempuran';
+      document.getElementById('visum-ke').textContent = item.kotaVisum || 'Mungkid';
+      document.getElementById('visum-tgl-1').textContent = formatTanggalIndo(item.tglBerangkat);
+      document.getElementById('visum-bendahara-nama').textContent = appState.settings.bendaharaNama;
+      document.getElementById('visum-bendahara-nip').textContent = `NIP. ${appState.settings.bendaharaNip}`;
+
+      document.getElementById('visum-tiba-2').textContent = item.tempatTujuan;
+      document.getElementById('visum-tgl-2a').textContent = formatTanggalIndo(item.tglBerangkat);
+      document.getElementById('visum-tiba-2b').textContent = item.tempatTujuan;
+      document.getElementById('visum-tgl-2b').textContent = formatTanggalIndo(item.tglKembali);
+
+      document.getElementById('visum-tiba-kembali').textContent = item.tempatSurat || 'Tempuran';
+      document.getElementById('visum-tgl-kembali').textContent = formatTanggalIndo(item.tglKembali);
+      document.getElementById('visum-kepsek-nama').textContent = appState.settings.kepsekNama;
+      document.getElementById('visum-kepsek-nip').textContent = `NIP. ${appState.settings.kepsekNip}`;
+
+      // --- HALAMAN 3: SURAT PERINTAH TUGAS (SPT) ---
+      document.getElementById('spt-nomor').textContent = nomorText;
+      document.getElementById('spt-dasar').textContent = item.dasar || '-';
+      document.getElementById('spt-nama').textContent = item.nama;
+
+      if (isSiswa) {
+        document.getElementById('spt-lbl-pangkat').textContent = 'Kelas';
+        document.getElementById('spt-lbl-nip').textContent = 'NIS / NISN';
+        document.getElementById('spt-lbl-jabatan').textContent = 'Sekolah';
+      } else {
+        document.getElementById('spt-lbl-pangkat').textContent = 'Pangkat/Gol.';
+        document.getElementById('spt-lbl-nip').textContent = 'NIP';
+        document.getElementById('spt-lbl-jabatan').textContent = 'Jabatan';
+      }
+
+      document.getElementById('spt-pangkat').textContent = item.pangkat || '-';
+      document.getElementById('spt-nip').textContent = item.nip || '-';
+      document.getElementById('spt-jabatan').textContent = item.jabatan || '-';
+
+      const sptPkContainer = document.getElementById('spt-pengikut-container');
+      if (pkList.length > 0) {
+        sptPkContainer.innerHTML = `
+          <div style="font-weight: bold; margin-top: 4px; margin-bottom: 2px;">Pengikut / Peserta Tambahan:</div>
+          <ol style="margin: 0; padding-left: 18px;">
+            ${pkList.map(p => `<li>${escapeHtml(p.nama)} ${p.keterangan ? `(${escapeHtml(p.keterangan)})` : ''}</li>`).join('')}
+          </ol>
+        `;
+      } else {
+        sptPkContainer.innerHTML = '';
+      }
+
+      document.getElementById('spt-maksud').textContent = item.maksud;
+      document.getElementById('spt-hari-mulai').textContent = getNamaHariIndo(item.tglBerangkat);
+      document.getElementById('spt-hari-selesai').textContent = getNamaHariIndo(item.tglKembali);
+      document.getElementById('spt-waktu-mulai').textContent = item.waktuMulai || '08:00';
+      document.getElementById('spt-waktu-selesai').textContent = item.waktuSelesai || 'Selesai';
+      document.getElementById('spt-tgl-mulai').textContent = formatTanggalIndo(item.tglBerangkat);
+      document.getElementById('spt-tgl-selesai').textContent = formatTanggalIndo(item.tglKembali);
+      document.getElementById('spt-tempat').textContent = item.tempatTujuan;
+
+      document.getElementById('spt-tempat-surat').textContent = item.tempatSurat || 'Tempuran';
+      document.getElementById('spt-tgl-surat').textContent = formatTanggalIndo(item.tglSurat);
+      document.getElementById('spt-kepsek-nama').textContent = appState.settings.kepsekNama;
+      document.getElementById('spt-kepsek-pangkat').textContent = appState.settings.kepsekPangkat;
+      document.getElementById('spt-kepsek-nip').textContent = `NIP. ${appState.settings.kepsekNip}`;
+    }
+
+    // =========================================================================
+    // 8. RIWAYAT & REKAPITULASI PERJALANAN DINAS (MINGGUAN / BULANAN / TAHUNAN)
+    // =========================================================================
+    function getISOWeekString(dateObj) {
+      const d = new Date(Date.UTC(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate()));
+      const dayNum = d.getUTCDay() || 7;
+      d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+      const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+      const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+      return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+    }
+
+    function initRekapFilters() {
+      const now = new Date();
+      const bulanEl = document.getElementById('rekap-filter-bulan');
+      const mingguEl = document.getElementById('rekap-filter-minggu');
+      const tahunEl = document.getElementById('rekap-filter-tahun');
+
+      if (!bulanEl.value) {
+        const sampleDate = appState.sppdList[0]?.tglBerangkat || now.toISOString().slice(0, 10);
+        bulanEl.value = sampleDate.slice(0, 7);
+      }
+      if (!mingguEl.value) {
+        const sampleDate = appState.sppdList[0]?.tglBerangkat || now.toISOString().slice(0, 10);
+        mingguEl.value = getISOWeekString(new Date(sampleDate + 'T00:00:00'));
+      }
+      const years = new Set([String(now.getFullYear()), '2026']);
+      appState.sppdList.forEach(item => {
+        if (item.tglBerangkat) years.add(item.tglBerangkat.slice(0, 4));
+      });
+      const sortedYears = Array.from(years).sort().reverse();
+      const prevYear = tahunEl.value;
+      tahunEl.innerHTML = sortedYears.map(y => `<option value="${y}">Tahun ${y}</option>`).join('');
+      if (prevYear && sortedYears.includes(prevYear)) {
+        tahunEl.value = prevYear;
+      }
+      onRekapPeriodeChange(false);
+    }
+
+    function onRekapPeriodeChange(shouldRender = true) {
+      const periode = document.getElementById('rekap-periode').value;
+      document.getElementById('rekap-filter-bulan').classList.toggle('hidden', periode !== 'bulanan');
+      document.getElementById('rekap-filter-minggu').classList.toggle('hidden', periode !== 'mingguan');
+      document.getElementById('rekap-filter-tahun').classList.toggle('hidden', periode !== 'tahunan');
+      if (shouldRender) renderRekapPerjalanan();
+    }
+
+    function parseHariNumeric(lamaStr) {
+      const m = String(lamaStr || '').match(/(\d+)/);
+      return m ? parseInt(m[1], 10) : 1;
+    }
+
+    function getFilteredRekapItems() {
+      const periode = document.getElementById('rekap-periode').value;
+      const statusFilter = document.getElementById('rekap-filter-status').value;
+      const bulanVal = document.getElementById('rekap-filter-bulan').value;
+      const mingguVal = document.getElementById('rekap-filter-minggu').value;
+      const tahunVal = document.getElementById('rekap-filter-tahun').value;
+
+      return appState.sppdList.filter(item => {
+        if (statusFilter === 'approved' && item.status !== 'approved') return false;
+        const tgl = item.tglBerangkat || '';
+        if (!tgl) return false;
+        if (periode === 'bulanan' && bulanVal) {
+          return tgl.slice(0, 7) === bulanVal;
+        }
+        if (periode === 'mingguan' && mingguVal) {
+          return getISOWeekString(new Date(tgl + 'T00:00:00')) === mingguVal;
+        }
+        if (periode === 'tahunan' && tahunVal) {
+          return tgl.slice(0, 4) === tahunVal;
+        }
+        return true;
+      });
+    }
+
+    function renderRekapPerjalanan() {
+      const items = getFilteredRekapItems();
+      const mapPersonel = new Map();
+      let totalHariAll = 0;
+
+      items.forEach(item => {
+        const hariNum = parseHariNumeric(item.lama);
+        totalHariAll += hariNum;
+
+        const keyUtama = `${item.nama.toUpperCase()}|${item.nip || '-'}`;
+        if (!mapPersonel.has(keyUtama)) {
+          mapPersonel.set(keyUtama, {
+            nama: item.nama,
+            nip: item.nip || '-',
+            kategori: item.kategori === 'siswa' ? 'Siswa' : 'Guru / Staf',
+            jumlah: 0,
+            hari: 0,
+            rincian: []
+          });
+        }
+        const entry = mapPersonel.get(keyUtama);
+        entry.jumlah += 1;
+        entry.hari += hariNum;
+        entry.rincian.push(`${item.tempatTujuan} (${formatTanggalIndo(item.tglBerangkat)})`);
+
+        (item.pengikut || []).forEach(pk => {
+          if (!pk.nama) return;
+          const keyPk = `${pk.nama.toUpperCase()}|PENGIKUT`;
+          if (!mapPersonel.has(keyPk)) {
+            mapPersonel.set(keyPk, {
+              nama: pk.nama,
+              nip: pk.keterangan || 'Pengikut',
+              kategori: 'Pengikut',
+              jumlah: 0,
+              hari: 0,
+              rincian: []
+            });
+          }
+          const pkEntry = mapPersonel.get(keyPk);
+          pkEntry.jumlah += 1;
+          pkEntry.hari += hariNum;
+          pkEntry.rincian.push(`${item.tempatTujuan} (${formatTanggalIndo(item.tglBerangkat)})`);
+        });
+      });
+
+      document.getElementById('stat-total-sppd').textContent = `${items.length} Kali`;
+      document.getElementById('stat-total-hari').textContent = `${totalHariAll} Hari`;
+      document.getElementById('stat-total-personel').textContent = `${mapPersonel.size} Orang`;
+
+      const pTbody = document.getElementById('rekap-personel-tbody');
+      const personelArr = Array.from(mapPersonel.values()).sort((a, b) => b.jumlah - a.jumlah);
+      if (personelArr.length === 0) {
+        pTbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-400">Tidak ada data perjalanan dinas pada periode ini.</td></tr>`;
+      } else {
+        pTbody.innerHTML = personelArr.map((p, idx) => `
+          <tr class="hover:bg-slate-50">
+            <td class="py-2.5 px-3 text-center">${idx + 1}</td>
+            <td class="py-2.5 px-3 font-bold text-slate-800">${escapeHtml(p.nama)}</td>
+            <td class="py-2.5 px-3 text-slate-600">${escapeHtml(p.nip)}</td>
+            <td class="py-2.5 px-3">${escapeHtml(p.kategori)}</td>
+            <td class="py-2.5 px-3 text-center font-bold text-sky-700">${p.jumlah}x</td>
+            <td class="py-2.5 px-3 text-center font-bold text-emerald-700">${p.hari} Hari</td>
+            <td class="py-2.5 px-3 text-slate-600">${p.rincian.map(r => escapeHtml(r)).join('; ')}</td>
+          </tr>
+        `).join('');
+      }
+
+      const dTbody = document.getElementById('rekap-detail-tbody');
+      if (items.length === 0) {
+        dTbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-400">Tidak ada log riwayat SPPD pada periode ini.</td></tr>`;
+      } else {
+        dTbody.innerHTML = items.map(item => `
+          <tr class="hover:bg-slate-50">
+            <td class="py-2.5 px-3 whitespace-nowrap">${formatTanggalIndo(item.tglBerangkat)}</td>
+            <td class="py-2.5 px-3 font-mono">${escapeHtml(item.nomorSurat || '[Belum Bernomor]')}</td>
+            <td class="py-2.5 px-3 font-semibold text-slate-800">${escapeHtml(item.nama)}</td>
+            <td class="py-2.5 px-3">${escapeHtml(item.maksud)}</td>
+            <td class="py-2.5 px-3">${escapeHtml(item.tempatTujuan)}</td>
+            <td class="py-2.5 px-3 whitespace-nowrap">${escapeHtml(item.lama)}</td>
+            <td class="py-2.5 px-3">${escapeHtml(item.anggaranPasal || '-')}</td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    function printRekapLaporan() {
+      const schoolName = appState.settings.sekolahNama || 'SMP Negeri 1 Tempuran';
+      const pTable = document.getElementById('rekap-personel-tbody').parentElement.outerHTML;
+      const dTable = document.getElementById('rekap-detail-tbody').parentElement.outerHTML;
+      const win = window.open('', '_blank', 'width=1000,height=800');
+      if (!win) {
+        window.print();
+        return;
+      }
+      win.document.open();
+      win.document.write(`
+        <!DOCTYPE html>
+        <html lang="id">
+        <head>
+          <meta charset="UTF-8" />
+          <title>Laporan Rekap Perjalanan Dinas - ${escapeHtml(schoolName)}</title>
+          <style>
+            body { font-family: Arial, sans-serif; color: #000; padding: 20px; font-size: 10pt; }
+            h2, h3 { margin: 4px 0; }
+            table { width: 100%; border-collapse: collapse; margin-top: 8px; margin-bottom: 18px; }
+            th, td { border: 1px solid #000; padding: 5px 7px; text-align: left; font-size: 9pt; }
+            th { background: #f1f5f9; }
+          </style>
+        </head>
+        <body>
+          <h2 style="text-align:center;">REKAPITULASI RIWAYAT PERJALANAN DINAS (SPPD)</h2>
+          <h3 style="text-align:center; margin-bottom: 16px;">${escapeHtml(schoolName.toUpperCase())}</h3>
+          <h3>A. Rekapitulasi Per Guru / Staf / Siswa</h3>
+          ${pTable}
+          <h3>B. Rincian Riwayat SPPD</h3>
+          ${dTable}
+          <script>window.onload = function() { window.print(); };<\/script>
+        </body>
+        </html>
+      `);
+      win.document.close();
+    }
+
+    // =========================================================================
+    // 9. MASTER DATA PEJABAT, PEGAWAI, SISWA & LOGO
+    // =========================================================================
+    function renderMasterSettings() {
+      document.getElementById('set-pemda').value = appState.settings.pemda || 'PEMERINTAH KABUPATEN MAGELANG';
+      document.getElementById('set-dinas').value = appState.settings.dinas || 'DINAS PENDIDIKAN DAN KEBUDAYAAN';
+      document.getElementById('set-sekolah-nama').value = appState.settings.sekolahNama || 'SMP Negeri 1 Tempuran';
+      document.getElementById('set-sekolah-alamat').value = appState.settings.sekolahAlamat || 'JL. Magelang-Purworejo Km.11 Tempuran Telp.(0293)3215018';
+      document.getElementById('set-sekolah-kontak').value = appState.settings.sekolahKontak || 'Kode Pos 56161 Email : smpntempuransatu@yahoo.co.id';
+
+      document.getElementById('set-admin-user').value = appState.settings.adminUser || 'admin';
+      document.getElementById('set-admin-pass').value = appState.settings.adminPass || 'tempuran1';
+
+      document.getElementById('set-kepsek-nama').value = appState.settings.kepsekNama || '';
+      document.getElementById('set-kepsek-pangkat').value = appState.settings.kepsekPangkat || '';
+      document.getElementById('set-kepsek-nip').value = appState.settings.kepsekNip || '';
+      document.getElementById('set-bendahara-nama').value = appState.settings.bendaharaNama || '';
+      document.getElementById('set-bendahara-nip').value = appState.settings.bendaharaNip || '';
+      document.getElementById('set-last-nomor').value = appState.settings.lastNomorUrut || 94;
+      document.getElementById('set-kode-surat').value = appState.settings.kodeSurat || '192/04.55.SMP/ 2026';
+
+      document.getElementById('preview-logo-kiri-box').innerHTML = getLogoMagelangHTML(52);
+      document.getElementById('preview-logo-kanan-box').innerHTML = getLogoSmpHTML(52);
+
+      const listPeg = document.getElementById('list-master-pegawai');
+      listPeg.innerHTML = appState.masterPegawai.map(p => `
+        <div class="py-2 flex items-center justify-between gap-2">
+          <div>
+            <div class="font-bold text-slate-800">${escapeHtml(p.nama)}</div>
+            <div class="text-[11px] text-slate-500">NIP: ${escapeHtml(p.nip || '-')} • ${escapeHtml(p.pangkat || '-')}</div>
+            <div class="text-[11px] text-slate-400">${escapeHtml(p.jabatan || '')}</div>
+          </div>
+          <button onclick="deleteMasterPegawai('${p.id}')" class="text-rose-500 hover:text-rose-700 px-2 py-1 font-bold">✕</button>
+        </div>
+      `).join('');
+
+      const listSis = document.getElementById('list-master-siswa');
+      listSis.innerHTML = appState.masterSiswa.map(s => `
+        <div class="py-2 flex items-center justify-between gap-2">
+          <div>
+            <div class="font-bold text-slate-800">${escapeHtml(s.nama)}</div>
+            <div class="text-[11px] text-slate-500">NIS/NISN: ${escapeHtml(s.nis || '-')} • ${escapeHtml(s.kelas)}</div>
+          </div>
+          <button onclick="deleteMasterSiswa('${s.id}')" class="text-rose-500 hover:text-rose-700 px-2 py-1 font-bold">✕</button>
+        </div>
+      `).join('');
+    }
+
+    function saveSchoolIdentity() {
+      if (!isAdminAuthorized()) return;
+      const namaSekolah = document.getElementById('set-sekolah-nama').value.trim();
+      if (!namaSekolah) {
+        showToast('Nama sekolah tidak boleh kosong!', 'error');
+        return;
+      }
+      appState.settings.pemda = document.getElementById('set-pemda').value.trim() || 'PEMERINTAH KABUPATEN MAGELANG';
+      appState.settings.dinas = document.getElementById('set-dinas').value.trim() || 'DINAS PENDIDIKAN DAN KEBUDAYAAN';
+      appState.settings.sekolahNama = namaSekolah;
+      appState.settings.sekolahAlamat = document.getElementById('set-sekolah-alamat').value.trim();
+      appState.settings.sekolahKontak = document.getElementById('set-sekolah-kontak').value.trim();
+      saveState();
+      updateRoleUI();
+      renderAllKops();
+      showToast(`Identitas sekolah berhasil diperbarui menjadi ${namaSekolah}!`);
+    }
+
+    function saveAdminCredentials() {
+      if (!isAdminAuthorized()) return;
+      const newU = document.getElementById('set-admin-user').value.trim();
+      const newP = document.getElementById('set-admin-pass').value;
+      if (!newU || !newP) {
+        showToast('Username dan password Admin tidak boleh kosong!', 'error');
+        return;
+      }
+      appState.settings.adminUser = newU;
+      appState.settings.adminPass = newP;
+      saveState();
+      showToast('Username & Password Akun Admin TU berhasil diperbarui!');
+    }
+
+    function saveMasterSettings() {
+      if (!isAdminAuthorized()) return;
+      appState.settings.kepsekNama = document.getElementById('set-kepsek-nama').value.trim();
+      appState.settings.kepsekPangkat = document.getElementById('set-kepsek-pangkat').value.trim();
+      appState.settings.kepsekNip = document.getElementById('set-kepsek-nip').value.trim();
+      appState.settings.bendaharaNama = document.getElementById('set-bendahara-nama').value.trim();
+      appState.settings.bendaharaNip = document.getElementById('set-bendahara-nip').value.trim();
+      appState.settings.lastNomorUrut = parseInt(document.getElementById('set-last-nomor').value, 10) || 94;
+      appState.settings.kodeSurat = document.getElementById('set-kode-surat').value.trim();
+      saveState();
+      if (currentPreviewId) loadPreviewById(currentPreviewId);
+      showToast('Pengaturan pejabat & penomoran berhasil disimpan!');
+    }
+
+    function addMasterPegawai(e) {
+      e.preventDefault();
+      if (!isAdminAuthorized()) return;
+      appState.masterPegawai.push({
+        id: `peg-${Date.now()}`,
+        nama: document.getElementById('m-peg-nama').value.trim(),
+        nip: document.getElementById('m-peg-nip').value.trim() || '-',
+        pangkat: document.getElementById('m-peg-pangkat').value.trim() || '-',
+        jabatan: document.getElementById('m-peg-jabatan').value.trim()
+      });
+      e.target.reset();
+      saveState();
+      renderMasterSettings();
+      showToast('Data Guru/Staf ditambahkan ke database.');
+    }
+
+    function deleteMasterPegawai(id) {
+      if (!isAdminAuthorized()) return;
+      appState.masterPegawai = appState.masterPegawai.filter(p => p.id !== id);
+      saveState();
+      renderMasterSettings();
+    }
+
+    function addMasterSiswa(e) {
+      e.preventDefault();
+      if (!isAdminAuthorized()) return;
+      appState.masterSiswa.push({
+        id: `sis-${Date.now()}`,
+        nama: document.getElementById('m-sis-nama').value.trim(),
+        nis: document.getElementById('m-sis-nis').value.trim(),
+        kelas: document.getElementById('m-sis-kelas').value.trim()
+      });
+      e.target.reset();
+      saveState();
+      renderMasterSettings();
+      showToast('Data Siswa ditambahkan ke database.');
+    }
+
+    function deleteMasterSiswa(id) {
+      if (!isAdminAuthorized()) return;
+      appState.masterSiswa = appState.masterSiswa.filter(s => s.id !== id);
+      saveState();
+      renderMasterSettings();
+    }
+
+    function optimizeLogoProportionalPNG(file, maxDim = 360) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const img = new Image();
+          img.onload = () => {
+            let w = img.naturalWidth || img.width;
+            let h = img.naturalHeight || img.height;
+            if (w > maxDim || h > maxDim) {
+              const ratio = Math.min(maxDim / w, maxDim / h);
+              w = Math.round(w * ratio);
+              h = Math.round(h * ratio);
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, w, h);
+            ctx.drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL('image/png'));
+          };
+          img.onerror = reject;
+          img.src = ev.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function uploadCustomLogo(event, side) {
+      if (!isAdminAuthorized()) return;
+      const file = event.target.files[0];
+      if (!file) return;
+      try {
+        const optimizedPng = await optimizeLogoProportionalPNG(file, 360);
+        if (side === 'kiri') {
+          appState.settings.logoKiri = optimizedPng;
+        } else {
+          appState.settings.logoKanan = optimizedPng;
+        }
+        await saveState();
+        renderMasterSettings();
+        renderAllKops();
+        showToast(`Logo ${side === 'kiri' ? 'Kiri' : 'Kanan'} berhasil diperbarui tanpa merubah bentuk aslinya!`);
+      } catch (err) {
+        showToast('Gagal memproses file gambar logo.', 'error');
+      }
+    }
+
+    async function resetLogos() {
+      if (!isAdminAuthorized()) return;
+      appState.settings.logoKiri = DEFAULT_LOGO_MAGELANG_URI;
+      appState.settings.logoKanan = DEFAULT_LOGO_SMP_URI;
+      await saveState();
+      renderMasterSettings();
+      renderAllKops();
+      showToast('Logo kop surat dikembalikan ke default.');
+    }
+
+    function exportBackupJson() {
+      if (!isAdminAuthorized()) {
+        showToast('Akses ditolak! Hanya Admin TU yang diizinkan melakukan backup data.', 'error');
+        return;
+      }
+      const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(appState, null, 2));
+      const dlAnchor = document.createElement('a');
+      dlAnchor.setAttribute('href', dataStr);
+      dlAnchor.setAttribute('download', `backup_sppd_smpn1tempuran_${new Date().toISOString().slice(0, 10)}.json`);
+      document.body.appendChild(dlAnchor);
+      dlAnchor.click();
+      dlAnchor.remove();
+    }
+
+    function importBackupJson(event) {
+      if (!isAdminAuthorized()) {
+        showToast('Akses ditolak! Hanya Admin TU yang diizinkan memulihkan data.', 'error');
+        return;
+      }
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        try {
+          const parsed = JSON.parse(ev.target.result);
+          if (parsed && parsed.sppdList && parsed.settings) {
+            appState = {
+              ...DEFAULT_STATE,
+              ...parsed,
+              settings: { ...DEFAULT_STATE.settings, ...(parsed.settings || {}) }
+            };
+            currentPreviewId = appState.sppdList[0]?.id || null;
+            await saveState();
+            updateRoleUI();
+            renderMasterSettings();
+            showToast('Backup data SPPD berhasil dipulihkan!');
+          } else {
+            showToast('Format file JSON tidak valid.', 'error');
+          }
+        } catch (err) {
+          showToast('Gagal membaca file backup JSON.', 'error');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // =========================================================================
+    // 10. UTILITAS TANGGAL INDONESIA, ESCAPE HTML & TOAST
+    // =========================================================================
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function formatTanggalIndo(isoDateStr) {
+      if (!isoDateStr) return '-';
+      const parts = isoDateStr.split('-');
+      if (parts.length !== 3) return isoDateStr;
+      const bulanIndo = [
+        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+      ];
+      const tahun = parts[0];
+      const bulanIdx = parseInt(parts[1], 10) - 1;
+      const hari = parseInt(parts[2], 10);
+      return `${hari} ${bulanIndo[bulanIdx] || ''} ${tahun}`;
+    }
+
+    function getNamaHariIndo(isoDateStr) {
+      if (!isoDateStr) return '-';
+      const d = new Date(isoDateStr + 'T00:00:00');
+      if (isNaN(d.getTime())) return '-';
+      const hariList = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+      return hariList[d.getDay()];
+    }
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+      const toast = document.createElement('div');
+      const bgClass = type === 'error'
+        ? 'bg-rose-600 text-white border-rose-700'
+        : 'bg-emerald-600 text-white border-emerald-700';
+      toast.className = `${bgClass} border px-4 py-3 rounded-2xl shadow-xl text-xs font-semibold flex items-center gap-2 transition-all duration-300`;
+      toast.innerHTML = `<span>${type === 'error' ? '⚠' : '✓'}</span><span>${escapeHtml(message)}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+      }, 3200);
+    }
+
+    // =========================================================================
+    // 11. INISIALISASI APLIKASI
+    // =========================================================================
+    window.addEventListener('DOMContentLoaded', async () => {
+      await loadStateAsync();
+      appState.role = 'guru';
+      adminAuthenticatedSession = false;
+      updateRoleUI();
+      renderAllKops();
+      resetFormToNew();
+      if (currentPreviewId) {
+        loadPreviewById(currentPreviewId);
+      }
+    });
+  </script>
+</body>
+</html>
