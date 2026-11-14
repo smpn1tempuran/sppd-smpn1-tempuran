@@ -10,11 +10,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
     :root {
-      color-scheme: light !important;
+      color-scheme: only light !important;
     }
 
     html, body {
-      color-scheme: light !important;
+      color-scheme: only light !important;
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
       background-color: #f1f5f9;
       color: #0f172a;
@@ -24,8 +24,9 @@
 
     /* Paksa kontras tinggi untuk semua elemen input, select, option, textarea */
     input, select, option, textarea {
-      color-scheme: light !important;
+      color-scheme: only light !important;
       color: #0f172a !important;
+      -webkit-text-fill-color: #0f172a !important;
       background-color: #ffffff !important;
       border-color: #cbd5e1;
       opacity: 1 !important;
@@ -33,6 +34,7 @@
 
     input::placeholder, textarea::placeholder {
       color: #64748b !important;
+      -webkit-text-fill-color: #64748b !important;
       opacity: 1 !important;
     }
 
@@ -41,6 +43,7 @@
       border-color: #2563eb !important;
       box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18) !important;
       color: #0f172a !important;
+      -webkit-text-fill-color: #0f172a !important;
       background-color: #ffffff !important;
     }
 
@@ -501,7 +504,7 @@
     <!-- TAB 3: RIWAYAT & REKAP PERJALANAN                                   -->
     <!-- =================================================================== -->
     <section id="section-rekap" class="hidden bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-7">
-      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-4 mb-6 border-b border-slate-200">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-4 mb-5 border-b border-slate-200">
         <div>
           <h2 class="text-lg sm:text-xl font-extrabold text-slate-900">Riwayat &amp; Rekapitulasi Perjalanan Dinas</h2>
           <p class="text-xs sm:text-sm text-slate-600 mt-0.5">Statistik jumlah penugasan &amp; akumulasi hari dinas berdasarkan dokumen yang telah disetujui.</p>
@@ -522,6 +525,45 @@
             <span>Cetak Laporan Rekap</span>
           </button>
         </div>
+      </div>
+
+      <!-- Pemilih Tanggal, Bulan & Tahun Dinamis -->
+      <div id="rekapDateControls" class="hidden flex-wrap items-end gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200 mb-5">
+        <div id="rekapControlTanggal" class="hidden flex-wrap items-center gap-2.5">
+          <div>
+            <label for="rekapStartDate" class="block text-[11px] font-bold text-slate-700 mb-1">Dari Tanggal (Minggu)</label>
+            <input type="date" id="rekapStartDate" onchange="onRekapDateChange()" class="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold" />
+          </div>
+          <div>
+            <label for="rekapEndDate" class="block text-[11px] font-bold text-slate-700 mb-1">Sampai Tanggal</label>
+            <input type="date" id="rekapEndDate" onchange="onRekapDateChange()" class="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold" />
+          </div>
+        </div>
+
+        <div id="rekapControlBulan" class="hidden">
+          <label for="rekapSelectBulan" class="block text-[11px] font-bold text-slate-700 mb-1">Pilih Bulan</label>
+          <select id="rekapSelectBulan" onchange="renderRekapTable()" class="rounded-xl border border-slate-300 px-3.5 py-1.5 text-xs font-semibold">
+            <option value="0">Januari</option>
+            <option value="1">Februari</option>
+            <option value="2">Maret</option>
+            <option value="3">April</option>
+            <option value="4">Mei</option>
+            <option value="5">Juni</option>
+            <option value="6">Juli</option>
+            <option value="7">Agustus</option>
+            <option value="8">September</option>
+            <option value="9">Oktober</option>
+            <option value="10">November</option>
+            <option value="11">Desember</option>
+          </select>
+        </div>
+
+        <div id="rekapControlTahun" class="hidden">
+          <label for="rekapSelectTahun" class="block text-[11px] font-bold text-slate-700 mb-1">Pilih Tahun</label>
+          <select id="rekapSelectTahun" onchange="renderRekapTable()" class="rounded-xl border border-slate-300 px-3.5 py-1.5 text-xs font-semibold"></select>
+        </div>
+
+        <div class="text-xs text-slate-600 font-medium pb-1.5 ml-auto" id="rekapActivePeriodHint"></div>
       </div>
 
       <!-- Ringkasan Kartu -->
@@ -1871,8 +1913,54 @@
     // =========================================================================
     // REKAPITULASI PERJALANAN (MINGGUAN, BULANAN, TAHUNAN, SEMUA)
     // =========================================================================
+    function initRekapDateControls() {
+      const now = new Date();
+      const todayIso = now.toISOString().split("T")[0];
+      const dayOfWeek = now.getDay();
+      const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      const monday = new Date(now);
+      monday.setDate(now.getDate() - diffToMonday);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+
+      const startEl = document.getElementById("rekapStartDate");
+      const endEl = document.getElementById("rekapEndDate");
+      const bulanEl = document.getElementById("rekapSelectBulan");
+      const tahunEl = document.getElementById("rekapSelectTahun");
+
+      if (startEl && !startEl.value) startEl.value = monday.toISOString().split("T")[0] || todayIso;
+      if (endEl && !endEl.value) endEl.value = sunday.toISOString().split("T")[0] || todayIso;
+      if (bulanEl) bulanEl.value = String(now.getMonth());
+
+      if (tahunEl) {
+        const currentYear = now.getFullYear();
+        const yearsSet = new Set([currentYear - 2, currentYear - 1, currentYear, currentYear + 1]);
+        appState.submissions.forEach(doc => {
+          if (doc.tanggalBerangkat) {
+            const y = parseInt(doc.tanggalBerangkat.slice(0, 4), 10);
+            if (!isNaN(y)) yearsSet.add(y);
+          }
+        });
+        const sortedYears = Array.from(yearsSet).sort((a, b) => b - a);
+        const prevVal = tahunEl.value || String(currentYear);
+        tahunEl.innerHTML = sortedYears.map(y => `<option value="${y}">${y}</option>`).join("");
+        tahunEl.value = sortedYears.includes(Number(prevVal)) ? prevVal : String(currentYear);
+      }
+    }
+
+    function onRekapDateChange() {
+      const startEl = document.getElementById("rekapStartDate");
+      const endEl = document.getElementById("rekapEndDate");
+      if (startEl && endEl && startEl.value && (!endEl.value || endEl.value < startEl.value)) {
+        endEl.value = startEl.value;
+      }
+      renderRekapTable();
+    }
+
     function setRekapFilter(period) {
       appState.rekapPeriod = period;
+      initRekapDateControls();
+
       ["mingguan", "bulanan", "tahunan", "semua"].forEach(p => {
         const btn = document.getElementById(`rekapFilter-${p}`);
         if (!btn) return;
@@ -1882,27 +1970,73 @@
           btn.className = "rekap-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 hover:bg-white transition cursor-pointer";
         }
       });
+
+      const controlsBox = document.getElementById("rekapDateControls");
+      const ctrlTanggal = document.getElementById("rekapControlTanggal");
+      const ctrlBulan = document.getElementById("rekapControlBulan");
+      const ctrlTahun = document.getElementById("rekapControlTahun");
+
+      if (period === "semua") {
+        controlsBox.classList.add("hidden");
+        controlsBox.classList.remove("flex");
+      } else {
+        controlsBox.classList.remove("hidden");
+        controlsBox.classList.add("flex");
+
+        ctrlTanggal.classList.toggle("hidden", period !== "mingguan");
+        ctrlTanggal.classList.toggle("flex", period === "mingguan");
+
+        ctrlBulan.classList.toggle("hidden", period !== "bulanan");
+        ctrlTahun.classList.toggle("hidden", period !== "bulanan" && period !== "tahunan");
+      }
+
       renderRekapTable();
     }
 
+    function getRekapPeriodLabel() {
+      const period = appState.rekapPeriod;
+      if (period === "mingguan") {
+        const s = document.getElementById("rekapStartDate")?.value || "";
+        const e = document.getElementById("rekapEndDate")?.value || "";
+        return `Periode Tanggal ${formatTanggalIndo(s)} s/d ${formatTanggalIndo(e)}`;
+      }
+      if (period === "bulanan") {
+        const bIdx = parseInt(document.getElementById("rekapSelectBulan")?.value || "0", 10);
+        const thn = document.getElementById("rekapSelectTahun")?.value || new Date().getFullYear();
+        return `Periode Bulan ${BULAN_ID[bIdx] || ""} ${thn}`;
+      }
+      if (period === "tahunan") {
+        const thn = document.getElementById("rekapSelectTahun")?.value || new Date().getFullYear();
+        return `Periode Tahun ${thn}`;
+      }
+      return "Semua Periode";
+    }
+
     function getFilteredApprovedDocsByPeriod() {
-      const now = new Date();
+      initRekapDateControls();
+      const startStr = document.getElementById("rekapStartDate")?.value || "";
+      const endStr = document.getElementById("rekapEndDate")?.value || "";
+      const selBulan = parseInt(document.getElementById("rekapSelectBulan")?.value || "0", 10);
+      const selTahun = parseInt(document.getElementById("rekapSelectTahun")?.value || String(new Date().getFullYear()), 10);
+
       return appState.submissions.filter(doc => {
         if (doc.status !== "APPROVED") return false;
         if (appState.rekapPeriod === "semua") return true;
 
-        const d = new Date(doc.tanggalBerangkat + "T00:00:00");
+        const iso = doc.tanggalBerangkat || "";
+        const d = new Date(iso + "T00:00:00");
         if (isNaN(d.getTime())) return false;
 
         if (appState.rekapPeriod === "mingguan") {
-          const diffDays = Math.abs((now - d) / (1000 * 60 * 60 * 24));
-          return diffDays <= 7;
+          if (startStr && iso < startStr) return false;
+          if (endStr && iso > endStr) return false;
+          return true;
         }
         if (appState.rekapPeriod === "bulanan") {
-          return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+          return d.getMonth() === selBulan && d.getFullYear() === selTahun;
         }
         if (appState.rekapPeriod === "tahunan") {
-          return d.getFullYear() === now.getFullYear();
+          return d.getFullYear() === selTahun;
         }
         return true;
       });
@@ -1910,6 +2044,9 @@
 
     function renderRekapTable() {
       const docs = getFilteredApprovedDocsByPeriod();
+      const hintEl = document.getElementById("rekapActivePeriodHint");
+      if (hintEl) hintEl.textContent = getRekapPeriodLabel();
+
       const map = new Map();
       let totalDays = 0;
 
@@ -1962,12 +2099,7 @@
     function printRekapReport() {
       const docs = getFilteredApprovedDocsByPeriod();
       const s = appState.settings;
-      const periodLabels = {
-        mingguan: "Periode Mingguan (7 Hari Terakhir)",
-        bulanan: "Periode Bulanan (Bulan Berjalan)",
-        tahunan: "Periode Tahunan (Tahun Berjalan)",
-        semua: "Semua Periode"
-      };
+      const periodTitle = getRekapPeriodLabel();
 
       const rowsHtml = docs.length === 0
         ? `<tr><td colspan="6" style="text-align:center; padding:12px;">Tidak ada data perjalanan dinas disetujui pada periode ini.</td></tr>`
@@ -2001,7 +2133,7 @@
         <p style="font-size:9.5pt;">${escapeHtml(s.alamat)}</p>
         <hr style="border: 1.5px solid #000; margin: 8px 0 14px 0;">
         <h3>LAPORAN REKAPITULASI PERJALANAN DINAS</h3>
-        <p><strong>${periodLabels[appState.rekapPeriod]}</strong></p>
+        <p><strong>${escapeHtml(periodTitle)}</strong></p>
         <table>
           <thead>
             <tr>
