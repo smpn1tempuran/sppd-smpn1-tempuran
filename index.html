@@ -1072,67 +1072,30 @@
       }
     }
 
-    function setCloudBadge(status, text) {
+    function setCloudBadge(status, label) {
       const badge = document.getElementById("cloudStatusBadge");
-      const label = document.getElementById("cloudStatusText");
-      if (!badge || !label) return;
-      label.textContent = text;
+      const textEl = document.getElementById("cloudStatusText");
+      if (textEl) textEl.textContent = label;
+      if (!badge) return;
+
       if (status === "ok") {
         badge.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 text-xs font-semibold";
       } else if (status === "syncing") {
         badge.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-950/80 border border-blue-400/40 text-blue-200 text-xs font-semibold";
       } else {
-        badge.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-950/80 border border-amber-500/40 text-amber-300 text-xs font-semibold";
+        badge.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-950/80 border border-amber-500/40 text-amber-200 text-xs font-semibold";
       }
     }
 
-    async function syncWithCloud(silent = false) {
+    async function pushToCloud(silent = true) {
       if (!PERMANENT_CLOUD_URL) return;
       const syncIcon = document.getElementById("syncIcon");
       if (syncIcon) syncIcon.classList.add("animate-spin");
-      setCloudBadge("syncing", "Menyinkronkan...");
+      setCloudBadge("syncing", "Mengirim ke Cloud...");
 
       try {
-        // 1. Ambil data terbaru dari Google Sheets
-        const getRes = await fetch(PERMANENT_CLOUD_URL, { method: "GET", cache: "no-store" });
-        if (getRes.ok) {
-          const cloudData = await getRes.json();
-          if (cloudData && typeof cloudData === "object") {
-            const localMap = new Map(appState.submissions.map(item => [item.id, item]));
-            const cloudList = Array.isArray(cloudData.submissions)
-              ? cloudData.submissions
-              : (Array.isArray(cloudData.sppdList) ? cloudData.sppdList : []);
-
-            cloudList.forEach(cItem => {
-              if (!cItem || !cItem.id) return;
-              const existing = localMap.get(cItem.id);
-              if (!existing || cItem.status === "APPROVED") {
-                localMap.set(cItem.id, cItem);
-              }
-            });
-
-            appState.submissions = Array.from(localMap.values()).sort((a, b) =>
-              String(b.createdAt || "").localeCompare(String(a.createdAt || ""))
-            );
-
-            if (cloudData.settings && !appState.isAdmin) {
-              appState.settings = Object.assign({}, appState.settings, cloudData.settings);
-            }
-            if (Array.isArray(cloudData.guruList) && cloudData.guruList.length > 0 && !appState.isAdmin) {
-              appState.guruList = cloudData.guruList;
-            }
-            if (Array.isArray(cloudData.siswaList) && cloudData.siswaList.length > 0 && !appState.isAdmin) {
-              appState.siswaList = cloudData.siswaList;
-            }
-
-            saveAppState();
-            updateRoleUI();
-            populateQuickSelectDropdown();
-          }
-        }
-
-        // 2. Kirim pembaruan data ke Google Sheets
         const payload = JSON.stringify({
+          updatedAt: new Date().toISOString(),
           settings: appState.settings,
           guruList: appState.guruList,
           siswaList: appState.siswaList,
@@ -1158,6 +1121,70 @@
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: payload
         });
+
+        setCloudBadge("ok", "Cloud Tersinkron");
+        if (!silent) showToast("Data berhasil dikirim ke Google Spreadsheet.", "success");
+      } catch (err) {
+        console.warn("Gagal mengirim ke cloud:", err);
+        setCloudBadge("warn", "Mode Offline");
+      } finally {
+        if (syncIcon) syncIcon.classList.remove("animate-spin");
+      }
+    }
+
+    async function syncWithCloud(silent = false, pushOnly = false) {
+      if (!PERMANENT_CLOUD_URL) return;
+      if (pushOnly) {
+        return pushToCloud(silent);
+      }
+
+      const syncIcon = document.getElementById("syncIcon");
+      if (syncIcon) syncIcon.classList.add("animate-spin");
+      setCloudBadge("syncing", "Menyinkronkan...");
+
+      try {
+        // 1. Ambil data terbaru dari Google Sheets (tambahkan timestamp anti-cache)
+        const cacheBuster = `${PERMANENT_CLOUD_URL}?t=${Date.now()}`;
+        const getRes = await fetch(cacheBuster, { method: "GET", cache: "no-store" });
+        if (getRes.ok) {
+          const cloudData = await getRes.json();
+          if (cloudData && typeof cloudData === "object") {
+            const localMap = new Map(appState.submissions.map(item => [item.id, item]));
+            const cloudList = Array.isArray(cloudData.submissions)
+              ? cloudData.submissions
+              : (Array.isArray(cloudData.sppdList) ? cloudData.sppdList : []);
+
+            cloudList.forEach(cItem => {
+              if (!cItem || !cItem.id) return;
+              const existing = localMap.get(cItem.id);
+              if (!existing || cItem.status === "APPROVED") {
+                localMap.set(cItem.id, cItem);
+              }
+            });
+
+            appState.submissions = Array.from(localMap.values()).sort((a, b) =>
+              String(b.createdAt || "").localeCompare(String(a.createdAt || ""))
+            );
+
+            // Terapkan pengaturan & master data terbaru dari cloud jika tersedia
+            if (cloudData.settings && typeof cloudData.settings === "object") {
+              appState.settings = Object.assign({}, appState.settings, cloudData.settings);
+            }
+            if (Array.isArray(cloudData.guruList) && cloudData.guruList.length > 0) {
+              appState.guruList = cloudData.guruList;
+            }
+            if (Array.isArray(cloudData.siswaList) && cloudData.siswaList.length > 0) {
+              appState.siswaList = cloudData.siswaList;
+            }
+
+            saveAppState();
+            updateRoleUI();
+            populateQuickSelectDropdown();
+          }
+        }
+
+        // 2. Kirim pembaruan data ke Google Sheets
+        await pushToCloud(true);
 
         setCloudBadge("ok", "Cloud Aktif");
         if (!silent) showToast("Sinkronisasi dengan Google Spreadsheet berhasil.", "success");
@@ -1675,7 +1702,7 @@
       }
 
       saveAppState();
-      syncWithCloud(true);
+      pushToCloud(true);
       resetFormPengajuan();
       updateRoleUI();
 
@@ -1875,7 +1902,7 @@
       appState.submissions[idx].status = "APPROVED";
 
       saveAppState();
-      syncWithCloud(true);
+      pushToCloud(true);
       closeApproveModal();
       updateRoleUI();
       showToast("Dokumen disetujui & nomor surat resmi diterbitkan.", "success");
@@ -1897,7 +1924,7 @@
       document.getElementById("btnConfirmDeleteAction").onclick = function () {
         appState.submissions = appState.submissions.filter(item => item.id !== docId);
         saveAppState();
-        syncWithCloud(true);
+        pushToCloud(true);
         closeDeleteModal();
         updateRoleUI();
         showToast("Data pengajuan berhasil dihapus.", "success");
@@ -2830,8 +2857,9 @@
       appState.settings.kotaSurat = document.getElementById("setKotaSurat").value.trim() || "Tempuran";
 
       saveAppState();
+      pushToCloud(false);
       updateRoleUI();
-      showToast("Identitas sekolah berhasil diperbarui.", "success");
+      showToast("Identitas sekolah berhasil diperbarui & dikirim ke Cloud.", "success");
     }
 
     function handleLogoUpload(event, side) {
@@ -2847,6 +2875,7 @@
           appState.settings.logoRight = e.target.result;
         }
         saveAppState();
+        pushToCloud(true);
         renderMasterSection();
         showToast(`Logo ${side === "left" ? "kiri" : "kanan"} berhasil diperbarui.`, "success");
       };
@@ -2858,6 +2887,7 @@
       appState.settings.logoLeft = "";
       appState.settings.logoRight = "";
       saveAppState();
+      pushToCloud(true);
       renderMasterSection();
       showToast("Logo dikembalikan ke logo vektor bawaan.", "info");
     }
@@ -2874,18 +2904,20 @@
       });
       e.target.reset();
       saveAppState();
+      pushToCloud(true);
       populateQuickSelectDropdown();
       renderMasterSection();
-      showToast("Data Guru / Staf ditambahkan.", "success");
+      showToast("Data Guru / Staf ditambahkan & disinkronkan ke Cloud.", "success");
     }
 
     function deleteMasterGuru(id) {
       if (!appState.isAdmin) return;
       appState.guruList = appState.guruList.filter(g => g.id !== id);
       saveAppState();
+      pushToCloud(true);
       populateQuickSelectDropdown();
       renderMasterSection();
-      showToast("Data Guru / Staf dihapus.", "info");
+      showToast("Data Guru / Staf dihapus & disinkronkan ke Cloud.", "info");
     }
 
     function addMasterSiswa(e) {
@@ -2899,18 +2931,20 @@
       });
       e.target.reset();
       saveAppState();
+      pushToCloud(true);
       populateQuickSelectDropdown();
       renderMasterSection();
-      showToast("Data Siswa ditambahkan.", "success");
+      showToast("Data Siswa ditambahkan & disinkronkan ke Cloud.", "success");
     }
 
     function deleteMasterSiswa(id) {
       if (!appState.isAdmin) return;
       appState.siswaList = appState.siswaList.filter(s => s.id !== id);
       saveAppState();
+      pushToCloud(true);
       populateQuickSelectDropdown();
       renderMasterSection();
-      showToast("Data Siswa dihapus.", "info");
+      showToast("Data Siswa dihapus & disinkronkan ke Cloud.", "info");
     }
 
     function updateAdminCredentials(e) {
@@ -2923,6 +2957,7 @@
       appState.settings.adminUser = u;
       appState.settings.adminPass = p;
       saveAppState();
+      pushToCloud(true);
       document.getElementById("newAdminPass").value = "";
       showToast("Username & password Admin TU berhasil diubah.", "success");
     }
@@ -2978,10 +3013,11 @@
           if (Array.isArray(parsed.submissions)) appState.submissions = parsed.submissions;
 
           saveAppState();
+          pushToCloud(true);
           updateRoleUI();
           populateQuickSelectDropdown();
           renderMasterSection();
-          showToast("Restore database JSON berhasil.", "success");
+          showToast("Restore database JSON berhasil & disinkronkan ke Cloud.", "success");
         } catch (err) {
           showToast("Format file JSON tidak valid.", "error");
         }
@@ -2996,7 +3032,8 @@
       loadAppState();
       resetFormPengajuan();
       updateRoleUI();
-      syncWithCloud(true);
+      // Jika Admin sedang aktif, kirim data lokal terbaru ke Cloud terlebih dahulu agar tidak tertimpa data lama
+      syncWithCloud(true, appState.isAdmin);
     });
   </script>
 </body>
