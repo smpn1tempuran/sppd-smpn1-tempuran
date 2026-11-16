@@ -285,7 +285,7 @@
 
             <div>
               <label for="namaPengusul" class="block text-xs font-bold text-slate-800 mb-1.5">Nama Pengusul (Guru / Pembuat Ajuan)</label>
-              <input type="text" id="namaPengusul" placeholder="Contoh: ryono / Ahmad Fauzi, S.Pd." class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm" />
+              <input type="text" id="namaPengusul" placeholder="Contoh: Mukaryono / Ahmad Fauzi, S.Pd." class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm" />
             </div>
           </div>
         </div>
@@ -294,7 +294,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label for="namaPelaksana" id="labelNamaPelaksana" class="block text-xs font-bold text-slate-800 mb-1.5">Nama Pegawai / Guru <span class="text-rose-600">*</span></label>
-            <input type="text" id="namaPelaksana" required placeholder="Contoh: RYONO" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm" />
+            <input type="text" id="namaPelaksana" required placeholder="Contoh: MUKARYONO" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm" />
           </div>
 
           <div>
@@ -1007,9 +1007,10 @@
     };
 
     const DEFAULT_GURU_LIST = [
-      { id: "g_1", nama: "MUKARYONO", nip: "197608312014061002", pangkat: "Pengatur Muda Tk.1, II/ b", jabatan: "Operator Layanan Operasional" },
-      { id: "g_2", nama: "Setyo Aji Hutomo", nip: "197907092014061002", pangkat: "Pengatur Tk.1, II/d", jabatan: "Pengadministrasi Perkantoran" },
-      { id: "g_3", nama: "Drs. Indro Kadaryanto", nip: "197607162022212009", pangkat: "Pembina Tk.1, IV/b", jabatan: "Kepala Sekolah" },
+      { id: "g_1", nama: "MUKARYONO", nip: "197608312014061002", pangkat: "Pengatur Muda Tk.1, II/ b", jabatan: "Operator Layanan Operasional/  SMP Negeri 1 Tempuran" },
+      { id: "g_2", nama: "Ahmad Fauzi, S.Pd., M.Pd.", nip: "198504122010011014", pangkat: "Penata Tk.I, III/d", jabatan: "Guru Mata Pelajaran IPA / SMP Negeri 1 Tempuran" },
+      { id: "g_3", nama: "Siti Aminah, S.Pd.", nip: "198907212015022003", pangkat: "Penata Muda Tk.I, III/b", jabatan: "Guru Mata Pelajaran Bahasa Indonesia / SMP Negeri 1 Tempuran" },
+      { id: "g_4", nama: "Rina Wulandari, S.E.", nip: "-", pangkat: "-", jabatan: "Staf Administrasi Keuangan / SMP Negeri 1 Tempuran" }
     ];
 
     const DEFAULT_SISWA_LIST = [
@@ -1021,8 +1022,8 @@
     const appState = {
       isAdmin: sessionStorage.getItem("esppd_admin_session") === "1",
       settings: Object.assign({}, DEFAULT_SETTINGS),
-      guruList: [...DEFAULT_GURU_LIST],
-      siswaList: [...DEFAULT_SISWA_LIST],
+      guruList: [],
+      siswaList: [],
       submissions: [],
       rekapPeriod: "semua",
       selectedPreviewId: ""
@@ -1036,15 +1037,12 @@
           if (parsed.settings) {
             appState.settings = Object.assign({}, DEFAULT_SETTINGS, parsed.settings);
           }
-          if (Array.isArray(parsed.guruList) && parsed.guruList.length > 0) {
-            appState.guruList = parsed.guruList;
-          }
-          if (Array.isArray(parsed.siswaList) && parsed.siswaList.length > 0) {
-            appState.siswaList = parsed.siswaList;
-          }
-          if (Array.isArray(parsed.submissions)) {
-            appState.submissions = parsed.submissions;
-          }
+          appState.guruList = Array.isArray(parsed.guruList) ? parsed.guruList : [];
+          appState.siswaList = Array.isArray(parsed.siswaList) ? parsed.siswaList : [];
+          appState.submissions = Array.isArray(parsed.submissions) ? parsed.submissions : [];
+        } else {
+          appState.guruList = [...DEFAULT_GURU_LIST];
+          appState.siswaList = [...DEFAULT_SISWA_LIST];
         }
       } catch (err) {
         console.warn("Gagal memuat penyimpanan lokal:", err);
@@ -1165,14 +1163,14 @@
               String(b.createdAt || "").localeCompare(String(a.createdAt || ""))
             );
 
-            // Terapkan pengaturan & master data terbaru dari cloud jika tersedia
+            // Terapkan pengaturan & master data terbaru dari cloud jika tersedia (termasuk jika daftar sengaja dikosongkan)
             if (cloudData.settings && typeof cloudData.settings === "object") {
               appState.settings = Object.assign({}, appState.settings, cloudData.settings);
             }
-            if (Array.isArray(cloudData.guruList) && cloudData.guruList.length > 0) {
+            if (Array.isArray(cloudData.guruList)) {
               appState.guruList = cloudData.guruList;
             }
-            if (Array.isArray(cloudData.siswaList) && cloudData.siswaList.length > 0) {
+            if (Array.isArray(cloudData.siswaList)) {
               appState.siswaList = cloudData.siswaList;
             }
 
