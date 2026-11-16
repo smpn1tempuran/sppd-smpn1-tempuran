@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>E-SPPD &amp; SPT Digital - SMP Negeri 1 Tempuran</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -729,7 +730,21 @@
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Database Guru / Staf -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6">
-          <h3 class="text-base font-extrabold text-slate-900 mb-3">Database Guru &amp; Staf TU</h3>
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <h3 class="text-base font-extrabold text-slate-900">Database Guru &amp; Staf TU</h3>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <button type="button" onclick="downloadExcelTemplate('guru')" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 text-[11px] font-bold transition cursor-pointer" title="Unduh format file Excel (.xlsx) kosong untuk diisi">
+                Template Excel
+              </button>
+              <button type="button" onclick="exportExcelDatabase('guru')" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition cursor-pointer" title="Export seluruh data Guru & Staf ke Excel (.xlsx)">
+                Export Excel
+              </button>
+              <label class="px-2.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-bold transition cursor-pointer" title="Upload / Import data dari file Excel (.xlsx / .xls / .csv)">
+                <span>Import Excel</span>
+                <input type="file" accept=".xlsx,.xls,.csv" onchange="importExcelDatabase(event, 'guru')" class="hidden" />
+              </label>
+            </div>
+          </div>
           <form onsubmit="addMasterGuru(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-4 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
             <input type="text" id="newGuruNama" required placeholder="Nama Lengkap & Gelar" class="rounded-xl border border-slate-300 px-3 py-2 text-xs" />
             <input type="text" id="newGuruNip" placeholder="NIP / NIPPPK" class="rounded-xl border border-slate-300 px-3 py-2 text-xs" />
@@ -755,7 +770,21 @@
 
         <!-- Database Siswa -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6">
-          <h3 class="text-base font-extrabold text-slate-900 mb-3">Database Siswa</h3>
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <h3 class="text-base font-extrabold text-slate-900">Database Siswa</h3>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <button type="button" onclick="downloadExcelTemplate('siswa')" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 text-[11px] font-bold transition cursor-pointer" title="Unduh format file Excel (.xlsx) kosong untuk diisi">
+                Template Excel
+              </button>
+              <button type="button" onclick="exportExcelDatabase('siswa')" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition cursor-pointer" title="Export seluruh data Siswa ke Excel (.xlsx)">
+                Export Excel
+              </button>
+              <label class="px-2.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-bold transition cursor-pointer" title="Upload / Import data dari file Excel (.xlsx / .xls / .csv)">
+                <span>Import Excel</span>
+                <input type="file" accept=".xlsx,.xls,.csv" onchange="importExcelDatabase(event, 'siswa')" class="hidden" />
+              </label>
+            </div>
+          </div>
           <form onsubmit="addMasterSiswa(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-4 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
             <input type="text" id="newSiswaNama" required placeholder="Nama Lengkap Siswa" class="rounded-xl border border-slate-300 px-3 py-2 text-xs" />
             <input type="text" id="newSiswaNisn" placeholder="NISN" class="rounded-xl border border-slate-300 px-3 py-2 text-xs" />
@@ -2942,6 +2971,171 @@
       populateQuickSelectDropdown();
       renderMasterSection();
       showToast("Data Siswa dihapus & disinkronkan ke Cloud.", "info");
+    }
+
+    function downloadExcelTemplate(type) {
+      if (typeof XLSX === "undefined") {
+        showToast("Pustaka Excel sedang dimuat, silakan coba beberapa detik lagi.", "error");
+        return;
+      }
+
+      const wb = XLSX.utils.book_new();
+      if (type === "guru") {
+        const rows = [
+          {
+            "Nama Lengkap & Gelar": "Contoh: Ahmad Fauzi, S.Pd.",
+            "NIP / NIPPPK": "198504122010011014",
+            "Pangkat / Golongan": "Penata Tk.I, III/d",
+            "Jabatan / Instansi": "Guru Mata Pelajaran / SMP Negeri 1 Tempuran"
+          }
+        ];
+        const ws = XLSX.utils.json_to_sheet(rows);
+        ws["!cols"] = [{ wch: 32 }, { wch: 24 }, { wch: 24 }, { wch: 44 }];
+        XLSX.utils.book_append_sheet(wb, ws, "Template_Guru_Staf");
+        XLSX.writeFile(wb, "Template_Database_Guru_Staf.xlsx");
+        showToast("Template Excel Guru & Staf berhasil diunduh.", "success");
+      } else {
+        const rows = [
+          {
+            "Nama Lengkap Siswa": "Contoh: MUHAMMAD RIZKY PRATAMA",
+            "NISN": "0123456789",
+            "Kelas": "VIII A"
+          }
+        ];
+        const ws = XLSX.utils.json_to_sheet(rows);
+        ws["!cols"] = [{ wch: 34 }, { wch: 18 }, { wch: 14 }];
+        XLSX.utils.book_append_sheet(wb, ws, "Template_Siswa");
+        XLSX.writeFile(wb, "Template_Database_Siswa.xlsx");
+        showToast("Template Excel Siswa berhasil diunduh.", "success");
+      }
+    }
+
+    function exportExcelDatabase(type) {
+      if (!appState.isAdmin) return;
+      if (typeof XLSX === "undefined") {
+        showToast("Pustaka Excel sedang dimuat, silakan coba beberapa detik lagi.", "error");
+        return;
+      }
+
+      const wb = XLSX.utils.book_new();
+      if (type === "guru") {
+        const rows = appState.guruList.length > 0
+          ? appState.guruList.map((g, idx) => ({
+              "No": idx + 1,
+              "Nama Lengkap & Gelar": g.nama,
+              "NIP / NIPPPK": g.nip || "-",
+              "Pangkat / Golongan": g.pangkat || "-",
+              "Jabatan / Instansi": g.jabatan || "-"
+            }))
+          : [{ "No": 1, "Nama Lengkap & Gelar": "", "NIP / NIPPPK": "", "Pangkat / Golongan": "", "Jabatan / Instansi": "" }];
+
+        const ws = XLSX.utils.json_to_sheet(rows);
+        ws["!cols"] = [{ wch: 6 }, { wch: 32 }, { wch: 24 }, { wch: 24 }, { wch: 44 }];
+        XLSX.utils.book_append_sheet(wb, ws, "Data_Guru_Staf");
+        XLSX.writeFile(wb, `Database_Guru_Staf_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        showToast("Database Guru & Staf berhasil di-export ke Excel.", "success");
+      } else {
+        const rows = appState.siswaList.length > 0
+          ? appState.siswaList.map((s, idx) => ({
+              "No": idx + 1,
+              "Nama Lengkap Siswa": s.nama,
+              "NISN": s.nisn || "-",
+              "Kelas": s.kelas || "-"
+            }))
+          : [{ "No": 1, "Nama Lengkap Siswa": "", "NISN": "", "Kelas": "" }];
+
+        const ws = XLSX.utils.json_to_sheet(rows);
+        ws["!cols"] = [{ wch: 6 }, { wch: 34 }, { wch: 18 }, { wch: 14 }];
+        XLSX.utils.book_append_sheet(wb, ws, "Data_Siswa");
+        XLSX.writeFile(wb, `Database_Siswa_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        showToast("Database Siswa berhasil di-export ke Excel.", "success");
+      }
+    }
+
+    function importExcelDatabase(event, type) {
+      if (!appState.isAdmin) return;
+      const file = event.target.files[0];
+      if (!file) return;
+
+      if (typeof XLSX === "undefined") {
+        showToast("Pustaka Excel belum siap, silakan muat ulang halaman.", "error");
+        event.target.value = "";
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: "array" });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonRows = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
+
+          if (!Array.isArray(jsonRows) || jsonRows.length === 0) {
+            showToast("File Excel kosong atau tidak memiliki baris data.", "error");
+            event.target.value = "";
+            return;
+          }
+
+          let importedCount = 0;
+          const nowSeed = Date.now();
+
+          jsonRows.forEach((row, idx) => {
+            const normalized = {};
+            Object.keys(row).forEach(k => {
+              normalized[k.toLowerCase().trim()] = String(row[k]).trim();
+            });
+
+            if (type === "guru") {
+              const nama = normalized["nama lengkap & gelar"] || normalized["nama lengkap"] || normalized["nama guru"] || normalized["nama"] || "";
+              if (!nama || nama.toLowerCase().startsWith("contoh:")) return;
+
+              const nip = normalized["nip / nipppk"] || normalized["nip"] || normalized["nipppk"] || "-";
+              const pangkat = normalized["pangkat / golongan"] || normalized["pangkat/golongan"] || normalized["pangkat"] || normalized["golongan"] || "-";
+              const jabatan = normalized["jabatan / instansi"] || normalized["jabatan/instansi"] || normalized["jabatan"] || appState.settings.namaSekolahTitle;
+
+              appState.guruList.push({
+                id: `g_${nowSeed}_${idx}`,
+                nama,
+                nip: nip || "-",
+                pangkat: pangkat || "-",
+                jabatan: jabatan || appState.settings.namaSekolahTitle
+              });
+              importedCount++;
+            } else {
+              const nama = normalized["nama lengkap siswa"] || normalized["nama siswa"] || normalized["nama lengkap"] || normalized["nama"] || "";
+              if (!nama || nama.toLowerCase().startsWith("contoh:")) return;
+
+              const nisn = normalized["nisn"] || normalized["nis"] || normalized["nisn / nis"] || "-";
+              const kelas = normalized["kelas"] || normalized["rombel"] || "-";
+
+              appState.siswaList.push({
+                id: `s_${nowSeed}_${idx}`,
+                nama,
+                nisn: nisn || "-",
+                kelas: kelas || "-"
+              });
+              importedCount++;
+            }
+          });
+
+          if (importedCount === 0) {
+            showToast("Tidak ada data valid yang ditemukan. Pastikan header kolom sesuai Template Excel.", "error");
+          } else {
+            saveAppState();
+            pushToCloud(true);
+            populateQuickSelectDropdown();
+            renderMasterSection();
+            showToast(`Berhasil mengimpor ${importedCount} data ${type === "guru" ? "Guru/Staf" : "Siswa"} & disinkronkan ke Cloud.`, "success");
+          }
+        } catch (err) {
+          console.error("Gagal membaca file Excel:", err);
+          showToast("Gagal membaca file Excel. Pastikan format file valid (.xlsx / .xls / .csv).", "error");
+        } finally {
+          event.target.value = "";
+        }
+      };
+      reader.readAsArrayBuffer(file);
     }
 
     function updateAdminCredentials(e) {
